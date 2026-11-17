@@ -2373,6 +2373,36 @@ renderCountry=function(id,...a){_renderCountry(id,...a);if(SUBPAR[id]){const h=s
 
 setTimeout(()=>{window.__dbg={SUBF,renderSub,fillFor:id=>fillFor(id),pb:f=>path.bounds(bigPart(f)),tz,renderTZ,tzOffset,sunPos,flagDistract,VOX,flagCols,flagSim,flagPool,relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};},0);
 
+// ---------- botó «enrere»: tornar a la pantalla i configuració anterior ----------
+const HIST=[];let curPanel=null,histRestoring=false;
+function histSnap(){let g=null;try{g=isGlobe()?{r:proj.rotate().slice(),k:gk}:null;}catch(e){}
+  const ptab=curPanel&&curPanel.tab||tab;const sc=ptab==="spain"?"es":"world";const z=sc===scene?d3.zoomTransform(svg.node()):(zt[sc]||d3.zoomIdentity);
+  return {tab:ptab,panel:curPanel,view,zt:z,g,layers:JSON.stringify(layersOn),esLevel,esLayers:JSON.stringify(esLayers),selected,esSel:esSel?Object.assign({},esSel):null,subSel,tzv:tz.view};}
+function histPanel(name,fn){return function(...a){if(!histRestoring&&!(quiz&&quiz.running)){const sig=name+"|"+JSON.stringify(a.filter(x=>typeof x!=="function"));if(!curPanel||curPanel.sig!==sig){if(curPanel){HIST.push(histSnap());if(HIST.length>40)HIST.shift();}curPanel={name,args:a,sig};}}const r=fn.apply(this,a);if(curPanel&&!histRestoring)curPanel.tab=tab;histBtn();return r;};}
+const HPAN={renderCountry,renderWelcome,renderPhys,renderEsWelcome,renderEs,renderPlace,renderTZ,renderSub,renderPrint,renderMedals,renderGamesMenu,renderQuizSetup,renderStats,renderClass,renderFocus};
+renderCountry=histPanel("renderCountry",renderCountry);renderWelcome=histPanel("renderWelcome",renderWelcome);renderPhys=histPanel("renderPhys",renderPhys);renderEsWelcome=histPanel("renderEsWelcome",renderEsWelcome);renderEs=histPanel("renderEs",renderEs);renderPlace=histPanel("renderPlace",renderPlace);
+renderTZ=histPanel("renderTZ",renderTZ);renderSub=histPanel("renderSub",renderSub);renderPrint=histPanel("renderPrint",renderPrint);renderMedals=histPanel("renderMedals",renderMedals);renderGamesMenu=histPanel("renderGamesMenu",renderGamesMenu);renderQuizSetup=histPanel("renderQuizSetup",renderQuizSetup);renderStats=histPanel("renderStats",renderStats);renderClass=histPanel("renderClass",renderClass);renderFocus=histPanel("renderFocus",renderFocus);
+function histBtn(){const b=$("#zback");if(b){b.disabled=!HIST.length;b.style.opacity=HIST.length?1:.4;}}
+function histBack(){const s=HIST.pop();if(!s){toast("No hi ha cap pantalla anterior");return;}histRestoring=true;
+  try{tzStop&&tzStop();if(tz.view&&!s.tzv){tz.view=false;}
+    if(s.view!==view)setView(s.view);
+    Object.assign(layersOn,JSON.parse(s.layers));store.set("mapa_capes",layersOn);renderLayersBar();
+    Object.assign(esLayers,JSON.parse(s.esLayers));store.set("mapa_escapes",esLayers);esRoot.classed("nonames",!!esLayers.non).classed("nosym",!!esLayers.nosym);
+    esLevel=s.esLevel;store.set("mapa_esnivell",esLevel);
+    if(s.tab!==tab)setTab(s.tab,true);
+    selected=s.selected;esSel=s.esSel;subSel=s.subSel;
+    if(esReady){renderEsBar();esDrawLabels();esColor();}
+    if(s.panel&&HPAN[s.panel.name]){curPanel=s.panel;HPAN[s.panel.name](...s.panel.args);curPanel.tab=tab;}
+    else{curPanel=null;if(s.tab==="spain")HPAN.renderEsWelcome();else HPAN.renderWelcome();}
+    if(scene==="world")redraw();recolor();
+    if(s.g&&isGlobe()){const r0=proj.rotate(),ir=d3.interpolate(r0,s.g.r),k0=gk;svg.transition().duration(600).tween("globe",()=>t=>{proj.rotate(ir(t));gk=k0+(s.g.k-k0)*t;fitProj();redraw(t<1);}).on("end",()=>redraw());}
+    else svg.transition().duration(600).call(zoom.transform,s.zt);
+  }catch(e){console.error(e);}
+  histRestoring=false;histBtn();}
+$("#zlw").insertAdjacentHTML("beforebegin",`<button id="zback" title="Tornar a la pantalla anterior">↩️</button>`);
+$("#zback").onclick=histBack;histBtn();
+document.addEventListener("keydown",e=>{if(e.key==="Backspace"&&e.altKey||(e.altKey&&e.key==="ArrowLeft")){e.preventDefault();histBack();}});
+
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
 $("#coordbox").style.display=layersOn.coord?"block":"none";
