@@ -2250,7 +2250,7 @@ const hhmm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2
 function sunPos(d){const n=(d.getTime()-Date.UTC(2000,0,1,12))/864e5;const rad=Math.PI/180;const L=(280.46+.9856474*n)%360,g=(357.528+.9856003*n)%360*rad;const lam=(L+1.915*Math.sin(g)+.02*Math.sin(2*g))*rad,eps=(23.439-4e-7*n)*rad;
   const dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/rad;const gmst=((18.697374558+24.06570982441908*n)%24+24)%24;let lon=ra-gmst*15;lon=((lon+540)%360)-180;return [lon,dec/rad];}
 const sunAlt=(ll,sp)=>90-d3.geoDistance(ll,sp)*180/Math.PI;
-let tz={view:false,sel:"ESP",date:"today",min:null,color:true,play:null,utc:new Date(),mode:"manual",speed:store.get("mapa_tzspeed",30),globe:true,raf:null,prevView:null};
+let tz={sun:store.get("mapa_tzsun",true),view:false,sel:"ESP",date:"today",min:null,color:true,play:null,utc:new Date(),mode:"manual",speed:store.get("mapa_tzspeed",30),globe:true,raf:null,prevView:null};
 const gNight=root.insert("g",()=>gPhys.node()).attr("class","night").style("pointer-events","none");
 const TZPRE={mar:[2,20],jun:[5,21],sep:[8,22],dec:[11,21]};
 function tzDay(){const now=new Date();const y=now.getFullYear();if(tz.date==="today")return [y,now.getMonth(),now.getDate()];if(tz.date==="custom"&&tz.dm)return [y,tz.dm[0],tz.dm[1]];const p=TZPRE[tz.date]||[11,21];return [y,p[0],p[1]];}
@@ -2260,7 +2260,7 @@ function seasonN(m,d){const n=doy(m,d);return n>=doy(2,20)&&n<doy(5,21)?"Primave
 const SEASIC={Primavera:"🌸",Estiu:"☀️",Tardor:"🍂",Hivern:"❄️"};const SEAOPP={Primavera:"Tardor",Estiu:"Hivern",Tardor:"Primavera",Hivern:"Estiu"};
 function tzCompute(){const z=tzZone(tz.sel);if(tz.min==null){const now=new Date();tz.min=Math.round((now.getUTCHours()*60+now.getUTCMinutes()+tzOffset(z,now))/15)*15%1440;}
   const [y,m,d]=tzDay();let u=Date.UTC(y,m,d,0,0)+tz.min*60000;for(let i=0;i<2;i++)u=Date.UTC(y,m,d,0,0)+tz.min*60000-tzOffset(z,new Date(u))*60000;tz.utc=new Date(u);}
-function tzDraw(){const on=scene==="world"&&(tz.view||layersOn.night);gNight.style("display",on?null:"none");if(!on)return;if(!tz.view)tz.utc=new Date();
+function tzDraw(){const on=scene==="world"&&((tz.view&&tz.sun)||(!tz.view&&layersOn.night));gNight.style("display",on?null:"none");if(!on)return;if(!tz.view)tz.utc=new Date();
   const sp=sunPos(tz.utc);const anti=[sp[0]+180,-sp[1]];const k=isGlobe()?1:d3.zoomTransform(svg.node()).k;
   let cp=root.select("#sphclip");if(cp.empty()){cp=root.append("clipPath").attr("id","sphclip");cp.append("path");gNight.attr("clip-path","url(#sphclip)");}cp.select("path").attr("d",path({type:"Sphere"}));
   const rs=[90,87,84,81,78];gNight.selectAll("path").data(rs).join("path").attr("d",r=>path(d3.geoCircle().center(anti).radius(r)())).attr("fill","#0b1f4a").attr("fill-opacity",(r,i)=>i===0?.16:.1).attr("stroke","none");
@@ -2276,8 +2276,9 @@ function renderTZ(){tz.view=true;tzCompute();const c=byId[tz.sel];const z=tzZone
   const mine=tzOffset(tzZone("ESP"),tz.utc);const diff=(off-mine)/60;
   const offs=[...new Set(COUNTRIES.map(x=>tzOffset(tzZone(x.id),tz.utc)))].sort((a,b)=>a-b);
   side.innerHTML=`<div class="row"><button class="btn sec small" id="tzb">← Tornar</button></div><h2>🕐 Hores i llum del Sol</h2>
+  <div class="seg" id="tzsun"><button data-v="1" class="${tz.sun?"on":""}">☀️ Amb la llum del Sol</button><button data-v="0" class="${tz.sun?"":"on"}">🚫 Sense Sol (només hores)</button></div>
   <div class="seg" id="tzm"><button data-v="manual" class="${tz.mode==="manual"?"on":""}">🕹️ Mou tu el rellotge</button><button data-v="auto" class="${tz.mode==="auto"?"on":""}">🎬 1 dia automàtic</button></div>
-  <p class="hint">${tz.mode==="auto"?"Prem ▶️ i mira com la llum del Sol recorre el planeta durant un dia sencer, de les 00:00 a les 24:00 de l'hora del país triat.":"Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com el dia i la nit es desplacen pel món."}</p>
+  <p class="hint">${tz.mode==="auto"?"Prem ▶️ i mira com la llum del Sol recorre el planeta durant un dia sencer, de les 00:00 a les 24:00 de l'hora del país triat.":(tz.sun?"Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com el dia i la nit es desplacen pel món.":"Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com canvia l'hora a cada zona.")}</p>
   <div class="card"><div class="row" style="align-items:center;gap:12px">${clockSvg(tz.min)}<div><div class="big" style="font-size:22px">${c.f} ${esc(c.nm)}</div><div class="statbig" style="font-size:40px">${hhmm(tz.min)} ${capL}</div><div class="small">${offTxt(off)}${tz.sel!=="ESP"?` · ${diff===0?"la mateixa hora que a Espanya":(diff>0?diff+" h més que a Espanya":(-diff)+" h menys que a Espanya")}`:""}</div></div></div>
   ${tz.mode==="auto"?`<div class="bar" style="margin-top:10px;height:12px"><div id="tzbar" style="width:${tz.min/1440*100}%;background:linear-gradient(90deg,#173a5e,#f0a830,#ffd166,#f0a830,#173a5e)"></div></div><div class="row small" style="justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
    <div class="row"><button class="btn" id="tzap" style="font-size:18px;flex:1">${tz.raf?"⏸️ Pausa":tz.min>=1439?"🔁 Tornar a començar":tz.min>0&&tz.autoStarted?"▶️ Continuar":"▶️ Començar el dia"}</button></div>
@@ -2302,6 +2303,7 @@ function renderTZ(){tz.view=true;tzCompute();const c=byId[tz.sel];const z=tzZone
   $("#tzp").onclick=()=>{if(tz.raf)tzStop();else tzAuto(true);renderTZ();};
   $("#tznow").onclick=()=>{tzStop();tz.date="today";tz.min=null;renderTZ();};}
   side.querySelectorAll("#tzd button").forEach(b=>b.onclick=()=>{tz.date=b.dataset.v;renderTZ();});
+  side.querySelectorAll("#tzsun button").forEach(b=>b.onclick=()=>{tz.sun=b.dataset.v==="1";store.set("mapa_tzsun",tz.sun);const st=side.scrollTop;renderTZ();side.scrollTop=st;});
   const yr=$("#tzy");yr.oninput=()=>{tz.date="custom";tz.dm=fromDoy(+yr.value);tzQuick();const [a,m,d]=tzDay();const sn_=seasonN(m,d);const bg=yr.parentNode.querySelector(".big");if(bg)bg.innerHTML=`${d} de ${MONTHS[m]} · ${SEASIC[sn_]} ${sn_} <span class="small">(hemisferi nord) · ${SEASIC[SEAOPP[sn_]]} ${SEAOPP[sn_]} al sud</span>`;};yr.onchange=()=>{const st=side.scrollTop;renderTZ();side.scrollTop=st;};
   const setDM=()=>{let m=+$("#tzmm").value,d=+$("#tzdd").value;const mx=new Date(Date.UTC(2026,m+1,0)).getUTCDate();if(d>mx)d=mx;tz.date="custom";tz.dm=[m,d];const st=side.scrollTop;renderTZ();side.scrollTop=st;};$("#tzdd").onchange=setDM;$("#tzmm").onchange=setDM;
   side.querySelectorAll("#tzs button").forEach(b=>b.onclick=()=>{tz.speed=+b.dataset.v;store.set("mapa_tzspeed",tz.speed);const r=!!tz.raf,lp=tz.loop;tzStop();if(r)tzAuto(lp);renderTZ();});
