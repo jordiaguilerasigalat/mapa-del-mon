@@ -223,7 +223,17 @@ body.dark .relief image{opacity:.6}
 .hlcard.a{border-color:#3b6fb6}.hlcard.b{border-color:#f0a830}.hlcard.ok{border-color:var(--ok);background:rgba(46,158,91,.12)}.hlcard.ko{border-color:var(--ko);background:rgba(214,69,65,.12)}
 .hlcard .hlf{font-size:40px;line-height:1}.hlcard b{font-size:20px}.hlcard .hlv{font-size:24px;font-weight:900;color:var(--accent)}
 .ctab{border-collapse:collapse;font-size:13px;width:100%}.ctab th,.ctab td{border:1px solid var(--cardline);padding:4px 6px;text-align:center}.ctab td:first-child,.ctab th:first-child{text-align:left}.ctab th{font-size:11px}
+.mapbar .bartool{color:var(--muted,#667);font-size:12px}
+body.bar-v #layers,body.bar-v #esbar2{flex-direction:column;flex-wrap:nowrap;border-radius:16px;max-width:none;max-height:calc(100% - 110px);overflow-y:auto;align-items:stretch}
+body.bar-v #layers button,body.bar-v #esbar2 button{text-align:left;border-radius:10px}
+body.bar-v #esbar2 .bardet{padding:4px 6px 0!important}
+.vpop{margin:6px 0;display:flex;flex-direction:column;gap:6px}
+.tripbook>div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--cardline)}
+.tzleg{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:11px}.tzleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:3px;vertical-align:-2px}
+.card .btn.small:not(.sec){color:#fff}
 #printarea{display:none}
+.opts.flagopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.opts.flagopts .opt{padding:10px;display:flex;justify-content:center;align-items:center;min-height:86px}.opts.flagopts .opt .flg{height:62px;width:auto;max-width:100%}
+.hintline{background:#fff6d6;border:1px solid #f0d27a;border-radius:10px;padding:7px 10px;margin:4px 0;font-weight:700;color:#5a4500}body.dark .hintline{background:#3a3218;color:#ffe9a6;border-color:#6b5a26}
 .prkey{columns:3;font-size:13px;line-height:1.5}.prkey span{display:block;break-inside:avoid}
 .prhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}.prhead h1{font-size:22px;margin:0}
 @media print{body.printing>*:not(#printarea){display:none!important}body.printing #printarea{display:block!important;color:#000;background:#fff}body.printing{background:#fff!important}.prbreak{break-before:page}@page{size:landscape;margin:12mm}}
@@ -411,7 +421,7 @@ const PH={};PHYS.meta.forEach(m=>PH[m.id]=m);
 const PHICON={riu:"〰️",llac:"💧",serralada:"⛰️",desert:"🏜️",altipla:"🗻",regio:"🌿",cim:"🔺",depressio:"🔻",mar:"🌊",ocea:"🌊"};
 const PHTYPE={riu:"Riu",llac:"Llac",serralada:"Serralada",desert:"Desert",altipla:"Altiplà",regio:"Regió natural",cim:"Muntanya",depressio:"Punt baix",mar:"Mar",ocea:"Oceà"};
 function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display="none",1900);}
-function speak(t){window.__lastSpeak=t;try{const s=window.speechSynthesis;if(!s)return toast("La veu no està disponible en aquest navegador");s.cancel();const u=new SpeechSynthesisUtterance(t);const vs=s.getVoices();const v=vs.find(v=>/^ca/i.test(v.lang))||vs.find(v=>/^es/i.test(v.lang));if(v){u.voice=v;u.lang=v.lang;}else u.lang="ca-ES";u.rate=.95;s.speak(u);}catch(e){toast("La veu no està disponible");}}
+function speak(t){window.__lastSpeak=t;try{const s=window.speechSynthesis;if(!s)return toast("La veu no està disponible en aquest navegador");s.cancel();const u=new SpeechSynthesisUtterance(t);const V=window.__vox||{lang:"ca",voice:""};const vs=s.getVoices();const cand=vs.filter(x=>x.lang.toLowerCase().startsWith(V.lang));const sc=x=>(/natural|neural|online/i.test(x.name)?3:0)+(/google/i.test(x.name)?2:0);let v=(V.voice&&vs.find(x=>x.name===V.voice))||cand.sort((a,b)=>sc(b)-sc(a))[0];if(!v&&V.lang==="ca")v=vs.find(x=>/^es/i.test(x.lang));if(v){u.voice=v;u.lang=v.lang;}else u.lang={ca:"ca-ES",es:"es-ES",en:"en-GB"}[V.lang]||"ca-ES";u.rate=.95;s.speak(u);}catch(e){toast("La veu no està disponible");}}
 const hashStr=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 
@@ -420,7 +430,7 @@ let tab="explore", selected=null, scene="world";
 let marks=store.get("mapa_marques",{});
 const saveMarks=()=>{if(!store.set("mapa_marques",marks))toast("No s'ha pogut guardar en aquest navegador");};
 let records=store.get("mapa_rec",{});
-let layersOn=Object.assign({phys:false,coord:false,lang:false,cn:false,cap:true,city:true,rel:true},store.get("mapa_capes",{}));
+let layersOn=Object.assign({phys:false,coord:false,lang:false,cn:false,cap:true,city:true,rel:true,night:false},store.get("mapa_capes",{}));
 let quiz=null, game=null, langHL=null;
 if(store.get("mapa_fosc",false))document.body.classList.add("dark");
 $("#darkbtn").onclick=()=>{document.body.classList.toggle("dark");store.set("mapa_fosc",document.body.classList.contains("dark"));};
@@ -609,8 +619,11 @@ function setView(v){if(v===view)return;svg.interrupt();view=v;store.set("mapa_vi
   document.querySelectorAll("#views button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));}
 $("#views").innerHTML=[["flat","🗺️ Pla"],["merc","📐 Mercator"],["globe","🌐 Globus"]].map(([v,t])=>`<button data-v="${v}" class="${v===view?"on":""}">${t}</button>`).join("");
 $("#views").onclick=e=>{const b=e.target.closest("button");if(b)setView(b.dataset.v);};
-function renderLayersBar(){$("#layers").innerHTML=[["cn","🏷️ Països"],["cap","⭐ Capitals"],["city","🏙️ Ciutats"],["phys","🏔️ Relleu i aigües"],["rel","🗻 Ombres"],["coord","🧭 Latituds"],["lang","🗣️ Llengües"]].map(([k,t])=>`<button data-l="${k}" class="${layersOn[k]?"on":""}">${t}</button>`).join("");}
-$("#layers").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.l;layersOn[k]=!layersOn[k];store.set("mapa_capes",layersOn);renderLayersBar();redraw();recolor();renderLegend();
+let barV=store.get("mapa_barv",false),layMin=store.get("mapa_laymin",false);document.body.classList.toggle("bar-v",barV);
+const barTools=()=>`<button data-bo="1" class="bartool" title="${barV?"Posar en horitzontal":"Posar en vertical"}">${barV?"↔️ Horitzontal":"↕️ Vertical"}</button>`;
+function setBarV(v){barV=v;store.set("mapa_barv",v);document.body.classList.toggle("bar-v",v);renderLayersBar();if(typeof esReady!=="undefined"&&esReady)renderEsBar();}
+function renderLayersBar(){if(layMin){$("#layers").innerHTML=`<button data-lm="1" class="on" title="Mostra les capes">🗂️ Capes ▾</button>`;return;}$("#layers").innerHTML=[["cn","🏷️ Països"],["cap","⭐ Capitals"],["city","🏙️ Ciutats"],["phys","🏔️ Relleu i aigües"],["rel","🗻 Ombres"],["night","🌗 Dia i nit"],["coord","🧭 Latituds"],["lang","🗣️ Llengües"]].map(([k,t])=>`<button data-l="${k}" class="${layersOn[k]?"on":""}">${t}</button>`).join("")+barTools()+`<button data-lm="1" class="bartool" title="Amaga les capes">▴ Amagar</button>`;}
+$("#layers").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.lm){layMin=!layMin;store.set("mapa_laymin",layMin);renderLayersBar();return;}const k=b.dataset.l;layersOn[k]=!layersOn[k];store.set("mapa_capes",layersOn);renderLayersBar();redraw();recolor();renderLegend();
   if(k==="lang"&&layersOn.lang&&tab==="explore"&&!selected)renderWelcome();if(k==="phys"&&layersOn.phys)toast("Toca un riu, llac, muntanya o nom per a vore'n la fitxa");if(k==="coord")$("#coordbox").style.display=layersOn.coord?"block":"none";};
 
 // ---------- language colouring ----------
@@ -623,6 +636,7 @@ function countriesWithLang(n){const k=langKey(n);return COUNTRIES.filter(c=>c.ll
 // ---------- colouring ----------
 function fillFor(id){
   if(!id)return null;
+  if(tab==="explore"&&typeof tzFill==="function"){const tc=tzFill(id);if(tc)return tc;}
   if(game&&game.kind==="fill"&&game.world){const kk=game.lv==="both"?"c|"+id:id;if(game.ok[kk])return "#9fd8b0";if(game.sol&&game.items.includes(kk))return "#f4c7c3";return game.items.includes(kk)?"#f6ecd2":"#e4e4e4";}
   if(quiz&&quiz.hl&&quiz.hl.L==="cty"&&quiz.hl.id===id)return "#e2574c";
   if(quiz&&quiz.colors&&quiz.colors["cty:"+id])return quiz.colors["cty:"+id];
@@ -663,6 +677,7 @@ svg.on("pointermove.coord",e=>{if(!layersOn.coord||scene!=="world")return;const 
 function onCountryClick(id){
   if(quiz&&quiz.running){quizMapClick("cty",id);return;}
   if(tab==="games"&&game&&!game.done){gameGuess(id);return;}
+  if(tab==="explore"&&tz.view){tz.sel=id;tzStop();renderTZ();return;}
   selected=id;recolor();
   if(tab==="places")renderPlace(id);else{if(tab!=="explore")setTab("explore",true);renderCountry(id);}
 }
@@ -870,10 +885,10 @@ function renderEsBar(){
   $("#esbar").innerHTML=[["ccaa","Comunitats"],["prov","Províncies"],["com","Comarques"],["mun","Pobles"]].map(([k,t])=>`<button data-lv="${k}" class="${esLevel===k?"on":""}">${t}</button>`).join("");
   const qOn=!!((quiz&&quiz.running)||(game&&game.kind==="fill"));$("#esbar").style.visibility=qOn?"hidden":"";$("#esbar2").style.top=qOn?"10px":"";
   if(barCollapsed()){$("#esbar2").innerHTML=`<button data-tg="1" class="on" title="Mostra les capes">🗂️ Capes${focusSel.length?" · "+focusSel.map(k=>FSHORT[k]).join(", "):""} ▾</button>`;return;}
-  $("#esbar2").innerHTML=[["riv","〰️ Rius"],["mt","⛰️ Muntanyes"],["rel","🗻 Ombres"],["rt","🥾 Rutes"],["mn","🏷️ Pobles"]].map(([k,t])=>`<button data-el="${k}" class="${esLayers[k]?"on":""}">${t}</button>`).join("")+`<span class="small" style="align-self:center;padding:0 4px">Detall:</span>`+FKS.map(k=>[k,FSHORT[k]]).map(([k,t])=>`<button data-fk="${k}" class="${focusSel.includes(k)?"on":""}">${t}</button>`).join("")+`<button data-tg="1" title="Amaga aquesta barra">▴ Amagar</button>`;
+  $("#esbar2").innerHTML=[["riv","〰️ Rius"],["mt","⛰️ Muntanyes"],["rel","🗻 Ombres"],["rt","🥾 Rutes"],["mn","🏷️ Pobles"]].map(([k,t])=>`<button data-el="${k}" class="${esLayers[k]?"on":""}">${t}</button>`).join("")+`<span class="small bardet" style="align-self:center;padding:0 4px">Detall:</span>`+FKS.map(k=>[k,FSHORT[k]]).map(([k,t])=>`<button data-fk="${k}" class="${focusSel.includes(k)?"on":""}">${t}</button>`).join("")+barTools()+`<button data-tg="1" class="bartool" title="Amaga aquesta barra">▴ Amagar</button>`;
 }
 $("#esbar").onclick=e=>{const b=e.target.closest("button");if(!b)return;setEsLevel(b.dataset.lv);};
-$("#esbar2").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.tg){if(quiz&&quiz.running)quizBarOpen=!quizBarOpen;else{esBarMin=!esBarMin;store.set("mapa_esbarmin",esBarMin);}renderEsBar();return;}if(b.dataset.fk){toggleFocus(b.dataset.fk);return;}esLayers[b.dataset.el]=!esLayers[b.dataset.el];store.set("mapa_escapes",esLayers);renderEsBar();esDrawLabels();esColor();relSchedule();};
+$("#esbar2").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.tg){if(quiz&&quiz.running)quizBarOpen=!quizBarOpen;else{esBarMin=!esBarMin;store.set("mapa_esbarmin",esBarMin);}renderEsBar();return;}if(b.dataset.fk){toggleFocus(b.dataset.fk);return;}esLayers[b.dataset.el]=!esLayers[b.dataset.el];store.set("mapa_escapes",esLayers);renderEsBar();esDrawLabels();esColor();relSchedule();};
 function toggleFocus(k){const add=!focusSel.includes(k);focusSel=add?focusSel.concat([k]):focusSel.filter(x=>x!==k);store.set("mapa_focus",focusSel);if(add&&!(quiz&&quiz.running)){if(esLevel!=="mun")setEsLevel("mun");setTimeout(()=>esZoomTo("focussel"),30);}renderEsBar();esColor();if(tab==="spain"&&!(quiz&&quiz.running))renderFocus();}
 function setFocusOnly(ks){focusSel=ks.slice();store.set("mapa_focus",focusSel);renderEsBar();esColor();}
 function setEsLevel(l){esLevel=l;store.set("mapa_esnivell",l);renderEsBar();esDrawLabels();esColor();}
@@ -936,7 +951,8 @@ function setTab(t,silent){
   else if(t==="games"){selected=null;recolor();renderGamesMenu();}
   else if(t==="places"){selected?renderPlace(selected):renderStats();}
   else if(t==="spain"){renderEsWelcome();}
-  checkStatic();
+  if(t!=="explore"&&typeof tz!=="undefined"&&tz.view){tzStop();tz.view=false;tzDraw();}
+  checkStatic();if(t!=="games")d3.selectAll(".flightln").remove();
 }
 const side=$("#side");
 
@@ -946,11 +962,11 @@ function renderWelcome(){
   <p class="hint big">👆 Toca qualsevol país per a vore'n la capital i les coses més importants.</p>
   <p class="hint">• Fes zoom amb la roda del ratolí o pessigant. Quan t'apropes apareixen més noms.<br>• Dalt a l'esquerra tries la vista (pla, Mercator o globus) i què vols vore: <b>🏷️ noms dels països</b>, <b>⭐ capitals</b>, <b>🏙️ altres ciutats importants</b>, <b>relleu i aigües</b> (rius, llacs, muntanyes, deserts, mars), <b>latituds</b> (equador, tròpics, coordenades) i <b>llengües</b>.<br>• Amb el botó <b>📏</b> (a la dreta del mapa) canvies el gruix de les línies.<br>• La pestanya <b>🇪🇸 Espanya</b> té comunitats, províncies, comarques i pobles de tota Espanya.</p>
   ${layersOn.lang?renderWorldLangs():`<div class="card"><h3>Continents</h3><div class="legendrow" style="margin-top:8px">${CONT_ORDER.map(c=>`<span><i style="background:${CONT[c]}"></i>${c}</span>`).join("")}</div></div>`}
-  <div class="row"><button class="btn" id="rnd">🎲 País a l'atzar</button><button class="btn sec" id="goquiz">📝 Fer un test</button><button class="btn sec" id="gogames">🎮 Jocs del dia</button><button class="btn sec" id="goprint">🖨️ Mapa mut per imprimir</button></div>
+  <div class="row"><button class="btn" id="rnd">🎲 País a l'atzar</button><button class="btn sec" id="goquiz">📝 Fer un test</button><button class="btn sec" id="gogames">🎮 Jocs del dia</button><button class="btn sec" id="goprint">🖨️ Mapa mut per imprimir</button><button class="btn sec" id="gotz">🕐 Hores i llum del Sol</button></div>
   <div class="card"><h3>💾 Les teues dades</h3><p class="small">Els resultats, estadístiques i llocs es guarden en este navegador. Per a passar-los a un altre ordinador o mòbil, guarda una còpia ací i obri-la en l'altre.</p><div class="row"><button class="btn sec small" id="bkexp">⬇️ Guardar còpia</button><button class="btn sec small" id="bkimp">⬆️ Carregar còpia</button><input type="file" id="bkfile" accept=".json,application/json" style="display:none"></div></div>
   <p class="small">${COUNTRIES.length} països · ${cityData.length} ciutats · ${PHYS.meta.length} llocs naturals · ${Object.keys(SPAIN.mun).length} pobles</p>`;
   $("#rnd").onclick=()=>{const c=pick(COUNTRIES);selected=c.id;recolor();renderCountry(c.id);zoomToCountry(c.id);};
-  $("#goquiz").onclick=()=>setTab("quiz");$("#gogames").onclick=()=>setTab("games");$("#goprint").onclick=()=>{if(prCfg.zone.startsWith("es"))prCfg.zone="world";renderPrint(renderWelcome);};
+  $("#goquiz").onclick=()=>setTab("quiz");$("#gogames").onclick=()=>setTab("games");$("#gotz").onclick=()=>renderTZ();$("#goprint").onclick=()=>{if(prCfg.zone.startsWith("es"))prCfg.zone="world";renderPrint(renderWelcome);};
   $("#bkexp").onclick=()=>{try{const o={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^mapa/.test(k))o[k]=localStorage.getItem(k);}
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({app:"mapa-del-mon",v:1,d:new Date().toISOString(),data:o})],{type:"application/json"}));a.download="mapa-del-mon-dades-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();toast("Còpia guardada");}catch(e){toast("No s'ha pogut guardar la còpia");}};
   $("#bkimp").onclick=()=>$("#bkfile").click();
@@ -1191,8 +1207,10 @@ M({id:"cap",g:"🌍 Món",nm:"🏛️ Capitals",ds:"Tria la capital correcta",sc
   mk:c=>({kind:"opt",text:`Quina és la capital de <b>${c.f} ${esc(c.nm)}</b>?`,opts:optsQ(c.cap,distract(c,3,x=>x.cap,fam())),ans:c.cap,tgt:{L:"cty",id:c.id},info:cInfo(c)})});
 M({id:"capr",g:"🌍 Món",nm:"🔁 De quin país és la capital?",ds:"Et dic la capital i tries el país",scene:"world",filters:true,pool:worldPool,get:id=>byId[id],
   mk:c=>({kind:"opt",text:`<b>${esc(c.cap)}</b> és la capital de…`,opts:optsQ(c.nm,distract(c,3,x=>x.nm,fam())),ans:c.nm,tgt:{L:"cty",id:c.id},info:cInfo(c)})});
-M({id:"flag",g:"🌍 Món",nm:"🚩 Banderes",ds:"De quin país és aquesta bandera?",scene:"world",filters:true,pool:worldPool,get:id=>byId[id],
-  mk:c=>({kind:"opt",flag:c.f,text:`De quin país és aquesta bandera?`,opts:optsQ(c.nm,distract(c,3,x=>x.nm,fam())),ans:c.nm,tgt:{L:"cty",id:c.id},info:cInfo(c)})});
+M({id:"flag",g:"🌍 Món",nm:"🚩 Banderes",ds:"De quin país és aquesta bandera?",scene:"world",filters:true,pool:()=>flagPool(),get:id=>byId[id],
+  mk:c=>({kind:"opt",flag:c.f,text:`De quin país és aquesta bandera?`,opts:optsQ(c.nm,flagDistract(c).map(x=>x.nm)),ans:c.nm,tgt:{L:"cty",id:c.id},info:cInfo(c),hints:setup.fhint!==false?flagHints(c):null})});
+M({id:"flagrev",g:"🌍 Món",nm:"🔁 Tria la bandera",ds:"Et dic el país i tu tries la seua bandera",scene:"world",filters:true,pool:()=>flagPool(),get:id=>byId[id],
+  mk:c=>({kind:"opt",flagOpts:true,noWrite:true,text:`Quina és la bandera ${dA(c.nm)}?`,opts:optsQ(c.f,flagDistract(c).map(x=>x.f)),ans:c.f,tgt:{L:"cty",id:c.id},info:cInfo(c),hints:setup.fhint!==false?flagHints(c).filter(h=>!/^🔤/.test(h)):null})});
 M({id:"which",g:"🌍 Món",nm:"🗺️ Quin país és?",ds:"El mapa marca un país en roig",scene:"world",filters:true,pool:worldPool,get:id=>byId[id],
   mk:c=>({kind:"opt",text:`Quin és el país marcat en roig al mapa?`,opts:optsQ(c.nm,distract(c,3,x=>x.nm,fam())),ans:c.nm,tgt:{L:"cty",id:c.id},hl:true,info:cInfo(c),noNames:true})});
 M({id:"nb",g:"🌍 Món",nm:"🤝 Veïns",ds:"Quin país fa frontera amb…?",scene:"world",filters:true,pool:()=>worldPool().filter(c=>c.nb.length),get:id=>byId[id],
@@ -1321,7 +1339,7 @@ function renderQuizSetup(){
   <div class="card" style="padding:10px"><label class="ck" style="font-weight:800"><input type="checkbox" id="mmix" ${setup.multi?"checked":""}> 🔀 Combinar diversos tests</label><div class="small">${setup.multi?`Toca tots els tests que vulgues barrejar (${mixModes().length} triats). Les preguntes es barregen.`:"Activa-ho per a barrejar, per exemple, mapes, capitals i províncies en un mateix test."}</div></div>
   ${groups.map(g=>`<div class="mgroup">${g}</div><div class="modes">${MODES.filter(m=>m.g===g).map(m=>`<button class="mode ${(setup.multi?mixModes().includes(m.id):setup.mode===m.id)?"on":""}" data-m="${m.id}">${setup.multi?(mixModes().includes(m.id)?"☑️ ":"⬜ "):""}<b>${m.nm}</b><span>${m.ds}${records[m.id]?` · Rècord: ${records[m.id].pct}%`:""}${records["crono_"+m.id]?` · ⏱️ ${records["crono_"+m.id].n}`:""}</span></button>`).join("")}</div>`).join("")}
   ${(setup.multi?mixModes().some(k=>MODE[k].filters):md.filters)?`<div><h3>Continent</h3><div class="seg" id="sc">${["Tot"].concat(CONT_ORDER).map(c=>`<button data-v="${c}" class="${setup.cont===c&&!setup.useCustom?"on":""}">${c==="Tot"?"Tot el món":c}</button>`).join("")}<button data-v="custom" class="${setup.useCustom?"on":""}">✏️ Personalitzat (${setup.custom.length})</button></div></div>
-  <div><h3>Dificultat</h3><div class="seg" id="sd"><button data-v="facil" class="${setup.diff==="facil"?"on":""}">😊 Fàcil</button><button data-v="dificil" class="${setup.diff==="dificil"?"on":""}">🔥 Difícil (tots)</button></div></div>`:""}
+  ${!setup.multi&&isFlagMode(setup.mode)?flagSetupHtml():`<div><h3>Dificultat</h3><div class="seg" id="sd"><button data-v="facil" class="${setup.diff==="facil"?"on":""}">😊 Fàcil</button><button data-v="dificil" class="${setup.diff==="dificil"?"on":""}">🔥 Difícil (tots)</button></div></div>`}`:""}
   <div><h3>Format</h3><div class="seg" id="sf"><button data-v="normal" class="${setup.fmt==="normal"?"on":""}">Normal</button><button data-v="crono" class="${setup.fmt==="crono"?"on":""}">⏱️ Contrarellotge 60 s</button></div></div>
   <div><h3>Com respons</h3><div class="seg" id="sw"><button data-v="0" class="${setup.write?"":"on"}">👆 Triar entre opcions</button><button data-v="1" class="${setup.write?"on":""}">✍️ Escriure el nom</button></div>${setup.write?`<div class="small">Escrius la resposta. S'accepten xicotetes faltes i no cal posar accents. Les preguntes de tocar el mapa no canvien.</div>`:""}</div>
   ${setup.fmt==="normal"?`<div><h3>Preguntes</h3><div class="seg" id="sn">${[10,20,0].map(n=>`<button data-v="${n}" class="${setup.n===n?"on":""}">${n||"Totes"}</button>`).join("")}</div></div>`:""}
@@ -1333,7 +1351,7 @@ function renderQuizSetup(){
   const seg=(sel,key,num)=>side.querySelectorAll(sel+" button").forEach(b=>b.onclick=()=>{if(key==="cont"&&b.dataset.v==="custom"){renderCustom();return;}if(key==="cont")setup.useCustom=false;setup[key]=num?+b.dataset.v:b.dataset.v;store.set("mapa_setup",setup);renderQuizSetup();});
   seg("#sc","cont");seg("#sn","n",true);side.querySelectorAll("#sw button").forEach(b=>b.onclick=()=>{setup.write=b.dataset.v==="1";store.set("mapa_setup",setup);const st=side.scrollTop;renderQuizSetup();side.scrollTop=st;});seg("#sd","diff");seg("#sf","fmt");seg("#sp","players",true);
   side.querySelectorAll("[data-pn]").forEach(i=>i.oninput=()=>{setup.names[+i.dataset.pn]=i.value;store.set("mapa_setup",setup);});
-  $("#go").onclick=()=>startQuiz();$("#qmed").onclick=()=>renderMedals();
+  $("#go").onclick=()=>startQuiz();$("#qmed").onclick=()=>renderMedals();bindFlagSetup();
   $("#stats").onclick=()=>renderStats();side.querySelectorAll("#swho button").forEach(b=>b.onclick=()=>{stu.cur=b.dataset.v||null;saveStu();renderQuizSetup();});
   {const o=$("#stulist");if(o)o.remove();}if(stu.list.length)document.body.insertAdjacentHTML("beforeend",`<datalist id="stulist">${stu.list.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`);side.querySelectorAll("[data-pn]").forEach(i=>i.setAttribute("list","stulist"));
   if(due.length)$("#rev").onclick=()=>startReview(due);
@@ -1404,9 +1422,10 @@ function showQ(){
   ${multi?`<div class="players">${quiz.names.map((n,i)=>`<span class="pl ${i===quiz.turn?"on":""}">${esc(n)}: ${quiz.scores[i]}</span>`).join("")}</div><div class="small">Torn de <b>${esc(quiz.names[quiz.turn])}</b></div>`:""}
   ${Q.flag?`<div class="qflag">${Q.flag}</div>`:""}
   <div class="qtext">${Q.text}</div>
-  ${Q.kind==="click"?`<p class="hint">👆 Toca-ho al mapa. Pots fer zoom. Tens ${Q.tries||2} intents.</p><button class="btn sec" id="skip">No ho sé</button>`:(canWrite(Q)?`<div class="row"><input type="text" id="wq" placeholder="Escriu la resposta…" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;font-size:18px"><button class="btn" id="wgo">✓</button></div><button class="btn sec small" id="wno">No ho sé</button>`:`<div class="opts">${Q.opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join("")}</div>`)}
+  ${Q.kind==="click"?`<p class="hint">👆 Toca-ho al mapa. Pots fer zoom. Tens ${Q.tries||2} intents.</p><button class="btn sec" id="skip">No ho sé</button>`:(canWrite(Q)?`<div class="row"><input type="text" id="wq" placeholder="Escriu la resposta…" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;font-size:18px"><button class="btn" id="wgo">✓</button></div><button class="btn sec small" id="wno">No ho sé</button>`:`<div class="opts ${Q.flagOpts?"flagopts":""}">${Q.opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join("")}</div>`)}${Q.hints&&!quiz.crono?`<div id="hints"></div><button class="btn sec small" id="hintb">💡 Demanar una pista (${Q.hints.length})</button>`:""}
   <div id="fbk"></div>
   <div class="row" style="margin-top:auto"><button class="btn sec" id="quit">Eixir del test</button></div>`;
+  if(Q.hints)bindHints();
   if(Q.kind==="opt"){if(canWrite(Q))bindWrite();else side.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answerOpt(b));}else $("#skip").onclick=()=>finishQ(false,"—");
   $("#quit").onclick=()=>{stopQuiz();cleanupQuiz();renderQuizSetup();};
 }
@@ -1519,7 +1538,7 @@ const WPOOL=()=>COUNTRIES.filter(c=>featBy[c.id]&&c.ar>=8000).sort((a,b)=>a.id.l
 function streakInfo(kind){return store.get("mapa_ratxa_"+kind,{last:null,cur:0,best:0});}
 function streakWin(kind){const s=streakInfo(kind);const t=today();const y=new Date(Date.now()-864e5);const ys=y.getFullYear()+"-"+String(y.getMonth()+1).padStart(2,"0")+"-"+String(y.getDate()).padStart(2,"0");if(s.last===t)return;s.cur=s.last===ys?s.cur+1:1;s.best=Math.max(s.best,s.cur);s.last=t;store.set("mapa_ratxa_"+kind,s);}
 let gMax=store.get("mapa_globle_max",0);
-function renderGamesMenu(){
+function renderGamesMenu(){d3.selectAll(".flightln").remove();
   fillCleanup();game=null;setScene("world");recolor();
   const g1=store.get("mapa_daily_globle",{}),g2=store.get("mapa_daily_silueta",{});const t=today();const s1=streakInfo("globle"),s2=streakInfo("silueta");
   side.innerHTML=`<h2>🎮 Jocs del dia</h2><p class="hint">Cada dia hi ha un repte nou, el mateix per a tothom. Si l'encertes cada dia, fas ratxa! 🔥</p>
@@ -1530,6 +1549,8 @@ function renderGamesMenu(){
   <div class="card"><h3>🧩 Silueta</h3><p class="small">Endevina el país per la seua forma. Tens 6 intents i pistes de distància i direcció.</p>
    <div class="row"><span class="small">🔥 Ratxa: ${s2.cur} · Millor: ${s2.best}${g2.date===t&&g2.done?" · ✅ Fet hui":""}</span></div>
    <div class="row" style="margin-top:6px"><button class="btn" id="g2">Jugar el d'avui</button><button class="btn sec" id="g2p">Practicar</button></div></div>
+  <div class="card"><h3>✈️ Prepara un viatge</h3><p class="small">Tria un país (o a l'atzar) i organitza el viatge: el vol, la llengua, la moneda, el menjar, les vacunes, el temps… i fes el teu quadern de viatge.</p>
+   <div class="row" style="margin-top:6px"><button class="btn" id="g7">Preparar un viatge</button></div></div>
   <div class="card"><h3>🛣️ Viatge entre països</h3><p class="small">Et done dos països i has d'anar d'un a l'altre per terra, dient els països veïns per on passes. Com menys voltes, millor!</p>
    <div class="row"><span class="small">🔥 Ratxa: ${streakInfo("travle").cur} · Millor: ${streakInfo("travle").best}${store.get("mapa_daily_travle",{}).date===t&&store.get("mapa_daily_travle",{}).done?" · ✅ Fet hui":""}</span></div>
    <div class="row" style="margin-top:6px"><button class="btn" id="g5">Jugar el d'avui</button><button class="btn sec" id="g5p">Practicar</button></div></div>
@@ -1541,7 +1562,7 @@ function renderGamesMenu(){
    <div class="row" style="margin-top:6px"><button class="btn" id="g3">Jugar</button></div></div>
   <div class="card"><h3>⏱️ Contrarellotge i 👥 classe</h3><p class="small">Al menú <b>Test</b> pots triar el format contrarellotge (60 segons) i jugar per equips.</p><button class="btn sec" id="gq">Anar a Test</button></div>
   <div class="row"><button class="btn sec" id="gmed">🏅 Medalles (${MEDS.filter(m=>meds[m[0]]).length}/${MEDS.length})</button></div>`;
-  side.querySelectorAll("#gmax button").forEach(b=>b.onclick=()=>{gMax=+b.dataset.v;store.set("mapa_globle_max",gMax);renderGamesMenu();});$("#g1").onclick=()=>startGloble(true);$("#g1p").onclick=()=>startGloble(false);$("#g2").onclick=()=>startSil(true);$("#g2p").onclick=()=>startSil(false);$("#gq").onclick=()=>setTab("quiz");$("#g3").onclick=clueSetup;$("#g4").onclick=fillSetup;$("#g5").onclick=()=>startTravle(true);$("#g5p").onclick=()=>startTravle(false);$("#g6").onclick=()=>startHL();$("#gmed").onclick=()=>renderMedals(renderGamesMenu);
+  side.querySelectorAll("#gmax button").forEach(b=>b.onclick=()=>{gMax=+b.dataset.v;store.set("mapa_globle_max",gMax);renderGamesMenu();});$("#g1").onclick=()=>startGloble(true);$("#g1p").onclick=()=>startGloble(false);$("#g2").onclick=()=>startSil(true);$("#g2p").onclick=()=>startSil(false);$("#gq").onclick=()=>setTab("quiz");$("#g3").onclick=clueSetup;$("#g4").onclick=fillSetup;$("#g5").onclick=()=>startTravle(true);$("#g5p").onclick=()=>startTravle(false);$("#g6").onclick=()=>startHL();$("#g7").onclick=tripSetup;$("#gmed").onclick=()=>renderMedals(renderGamesMenu);
 }
 function gameInput(){return `<div class="search" style="position:relative"><input id="gq" type="text" placeholder="Escriu un país…" autocomplete="off" style="width:100%;padding:10px 12px;border-radius:12px;border:2px solid var(--cardline);font-size:16px;font-family:inherit;background:var(--card);color:var(--ink)"><div class="sugg" id="gs" style="top:46px;left:0;right:0;width:auto"></div></div>`;}
 function bindGameInput(onPick){const i=$("#gq"),s=$("#gs");let res=[],ix=0;
@@ -1556,7 +1577,7 @@ function startGloble(daily){
   game.guesses.forEach(g=>game.cols[g.id]=heat(g.d));if(game.done)game.cols[target]="#2e9e5b";
   $("#zreset").onclick();recolor();renderGloble();
 }
-function gameGuess(id){if(game.kind==="fill"||game.kind==="hl")return;if(game.kind==="travle"){travleGuess(id);return;}if(game.kind==="globle")globleGuess(id);else if(game.kind==="clue")clueGuess(id);else silGuess(id);}
+function gameGuess(id){if(game.kind==="fill"||game.kind==="hl"||game.kind==="trip")return;if(game.kind==="travle"){travleGuess(id);return;}if(game.kind==="globle")globleGuess(id);else if(game.kind==="clue")clueGuess(id);else silGuess(id);}
 function globleGuess(id){if(game.done)return;if(game.guesses.some(g=>g.id===id)){toast("Ja l'has dit");return;}
   const d=minDist(id,game.target);game.guesses.push({id,d});game.cols[id]=id===game.target?"#2e9e5b":heat(d);
   if(id===game.target){game.done=true;game.won=true;if(game.daily)streakWin("globle");zoomToCountry(id);if(game.guesses.length<=5)award("termometre");confetti(100);}
@@ -1834,28 +1855,64 @@ swapFlags(document.body);
 
 // ================= extres: veu, medalles, confeti, jocs nous, impressió, relleu =================
 const sn=n=>String(Math.round(n));const dot=s=>s?(/[.!?]$/.test(s.trim())?s.trim():s.trim()+"."):"";const noRiu=s=>String(s).replace(/^riu\s+/i,"");
-const spPop=p=>p>=1000?nf(p/1000,1)+" mil milions d'habitants":p>=1?nf(p,p<10?1:0)+" milions d'habitants":sn(Math.round(p*1e6/1000)*1000)+" habitants";
-const spList=(a,n)=>{a=a.filter(Boolean);if(!a.length)return "";if(a.length>n)return a.slice(0,n).join(", ")+" i "+(a.length-n)+" més";return a.length>1?a.slice(0,-1).join(", ")+" i "+a[a.length-1]:a[0];};
+let VOX=Object.assign({lang:"ca",voice:""},store.get("mapa_veu",{}));window.__vox=VOX;
+const T=(ca,es,en)=>VOX.lang==="es"?es:VOX.lang==="en"?en:ca;
+const spPop=p=>p>=1000?nf(p/1000,1)+T(" mil milions d'habitants"," mil millones de habitantes"," billion people"):p>=1?nf(p,p<10?1:0)+T(" milions d'habitants"," millones de habitantes"," million people"):sn(Math.round(p*1e6/1000)*1000)+T(" habitants"," habitantes"," people");
+const spList=(a,n)=>{a=a.filter(Boolean);if(!a.length)return "";const y=T(" i "," y "," and ");if(a.length>n)return a.slice(0,n).join(", ")+y+(a.length-n)+T(" més"," más"," more");return a.length>1?a.slice(0,-1).join(", ")+y+a[a.length-1]:a[0];};
 const dA=s=>(/^[aeiouàèéíòóúh]/i.test(s)?"d'":"de ")+s;
-function sayCountry(c){const nb=c.nb.map(n=>byId[n]&&byId[n].nm);
-  speak(`${c.nm}. País ${dA(c.co)}. La capital és ${c.cap}. Té uns ${spPop(c.pop)} i una superfície de ${sn(c.ar)} quilòmetres quadrats. Llengua oficial: ${c.lg}. ${nb.length?"Fa frontera amb "+spList(nb,5)+".":"No té fronteres terrestres."} ${c.pl?"Un plat típic és "+c.pl+".":""} ${dot(c.fx&&c.fx[0])}`);}
-function sayPhys(m){speak(`${m.nm}. ${PHTYPE[m.t]}${m.co?" "+dA(m.co):""}. ${m.alt!=null?"Fa "+sn(m.alt)+" metres d'altitud. ":""}${m.len?"Fa uns "+sn(m.len)+" quilòmetres de llargària. ":""}${m.area?"Té uns "+sn(m.area)+" quilòmetres quadrats. ":""}${m.desc||""}`);}
+const CONTX={"Europa":["Europa","Europe"],"Àsia":["Asia","Asia"],"Àfrica":["África","Africa"],"Amèrica del Nord":["América del Norte","North America"],"Amèrica del Sud":["América del Sur","South America"],"Oceania":["Oceanía","Oceania"]};
+const contT=c=>VOX.lang==="ca"?c:(CONTX[c]||[c,c])[VOX.lang==="es"?0:1];
+let DNs={};const cName=c=>{if(VOX.lang==="ca")return c.nm;try{DNs[VOX.lang]=DNs[VOX.lang]||new Intl.DisplayNames([VOX.lang],{type:"region"});const n=DNs[VOX.lang].of(iso2(c));if(n&&n.length>1&&n!==iso2(c))return n;}catch(e){}return c.nm;};
+const PHX={riu:["Río","River"],llac:["Lago","Lake"],serralada:["Cordillera","Mountain range"],desert:["Desierto","Desert"],altipla:["Altiplano","Plateau"],regio:["Región natural","Natural region"],cim:["Montaña","Mountain"],depressio:["Punto más bajo","Lowest point"],mar:["Mar","Sea"],ocea:["Océano","Ocean"]};
+const LOCX={cim:["Montaña","Mountain"],serra:["Sierra","Mountain range"],natural:["Paraje natural","Natural area"],monument:["Monumento","Monument"],castell:["Castillo","Castle"],cova:["Cueva","Cave"],platja:["Playa","Beach"],cap:["Cabo","Cape"],port:["Puerto","Harbour"],illa:["Isla","Island"],embassament:["Embalse","Reservoir"]};
+const tx=(tab,ca,k)=>VOX.lang==="ca"?ca[k]:(tab[k]||[ca[k],ca[k]])[VOX.lang==="es"?0:1];
+const ccaaN=id=>SPAIN.ccaa[id].nm,provN=id=>SPAIN.prov[id].nm,comN=id=>SPAIN.com[id].nm,munN=id=>SPAIN.mun[id].nm;
+function sayCountry(c){const nb=c.nb.map(n=>byId[n]&&cName(byId[n]));const nm=cName(c);
+  speak(T(`${nm}. País ${dA(c.co)}. La capital és ${c.cap}. Té uns ${spPop(c.pop)} i una superfície de ${sn(c.ar)} quilòmetres quadrats. Llengua oficial: ${c.lg}. ${nb.length?"Fa frontera amb "+spList(nb,5)+".":"No té fronteres terrestres."} ${c.pl?"Un plat típic és "+c.pl+".":""} ${dot(c.fx&&c.fx[0])}`,
+    `${nm}. País de ${contT(c.co)}. Su capital es ${c.cap}. Tiene unos ${spPop(c.pop)} y una superficie de ${sn(c.ar)} kilómetros cuadrados. ${nb.length?"Hace frontera con "+spList(nb,5)+".":"No tiene fronteras terrestres."}`,
+    `${nm}. A country in ${contT(c.co)}. Its capital is ${c.cap}. It has about ${spPop(c.pop)} and an area of ${sn(c.ar)} square kilometres. ${nb.length?"It borders "+spList(nb,5)+".":"It has no land borders."}`));}
+function sayPhys(m){const ty=tx(PHX,PHTYPE,m.t);
+  speak(T(`${m.nm}. ${ty}${m.co?" "+dA(m.co):""}. ${m.alt!=null?"Fa "+sn(m.alt)+" metres d'altitud. ":""}${m.len?"Fa uns "+sn(m.len)+" quilòmetres de llargària. ":""}${m.area?"Té uns "+sn(m.area)+" quilòmetres quadrats. ":""}${m.desc||""}`,
+    `${m.nm}. ${ty}${m.co?" de "+contT(m.co):""}. ${m.alt!=null?"Tiene "+sn(m.alt)+" metros de altitud. ":""}${m.len?"Mide unos "+sn(m.len)+" kilómetros de largo. ":""}${m.area?"Tiene unos "+sn(m.area)+" kilómetros cuadrados.":""}`,
+    `${m.nm}. ${ty}${m.co?" in "+contT(m.co):""}. ${m.alt!=null?"It is "+sn(m.alt)+" metres high. ":""}${m.len?"It is about "+sn(m.len)+" kilometres long. ":""}${m.area?"It covers about "+sn(m.area)+" square kilometres.":""}`));}
 function sayEs(L,id){let t="";
   if(L==="ccaa"){const c=SPAIN.ccaa[id];const pv=Object.values(SPAIN.prov).filter(p=>p.cc===id).map(p=>p.nm);
-    t=`${c.nm}. Comunitat autònoma. La capital és ${c.cap}. Té uns ${spPop(c.pop)}. Llengües: ${c.lg}. ${pv.length===1?"Té una sola província: "+pv[0]:"Té "+pv.length+" províncies: "+spList(pv,9)}. ${dot(c.fx&&c.fx[0])}`;}
+    t=T(`${c.nm}. Comunitat autònoma. La capital és ${c.cap}. Té uns ${spPop(c.pop)}. Llengües: ${c.lg}. ${pv.length===1?"Té una sola província: "+pv[0]:"Té "+pv.length+" províncies: "+spList(pv,9)}. ${dot(c.fx&&c.fx[0])}`,
+      `${c.nm}. Comunidad autónoma de España. Su capital es ${c.cap}. Tiene unos ${spPop(c.pop)}. ${pv.length===1?"Tiene una sola provincia: "+pv[0]:"Tiene "+pv.length+" provincias: "+spList(pv,9)}.`,
+      `${c.nm}. An autonomous community of Spain. Its capital is ${c.cap}. It has about ${spPop(c.pop)}. ${pv.length===1?"It has one province: "+pv[0]:"It has "+pv.length+" provinces: "+spList(pv,9)}.`);}
   else if(L==="prov"){const p=SPAIN.prov[id];const nc=Object.keys(SPAIN.com).filter(k=>(comMuns[k]||[]).some(m=>m.slice(0,2)===id)).length;const nm=Object.keys(SPAIN.mun).filter(m=>m.slice(0,2)===id).length;
-    t=`${p.nm}. Província de la comunitat: ${SPAIN.ccaa[p.cc].nm}. La capital és ${p.cap}. Té ${nm} municipis${nc>1?" repartits en "+nc+" comarques":""}.`;}
-  else if(L==="com"){const c=SPAIN.com[id];const ms=comMuns[id]||[];const pv=[...new Set(ms.map(m=>SPAIN.prov[m.slice(0,2)].nm))];
-    t=`${c.nm}. Comarca de la comunitat: ${SPAIN.ccaa[c.cc].nm}, província ${pv.length>1?"de "+spList(pv,3):dA(pv[0])}. ${c.cap?"La capital és "+c.cap+". ":""}Té ${ms.length} municipis${c.sup?" i "+sn(c.sup)+" quilòmetres quadrats":""}. ${ms.length<=8?"Són: "+spList(ms.map(m=>SPAIN.mun[m].nm),8)+".":""}`;}
-  else if(L==="mun"){const m=SPAIN.mun[id];const p=SPAIN.prov[id.slice(0,2)];const ks=LOCAL.peaks.filter(x=>x.mun===id);const rs=LOCAL.rivers.filter(r=>r.muns.includes(id)&&r.t==="riu");
-    t=`${m.nm}. Municipi. Comarca: ${SPAIN.com[m.com].nm}. Província: ${p.nm}. Comunitat: ${SPAIN.ccaa[p.cc].nm}. ${LOCAL.notes[id]?dot(LOCAL.notes[id])+" ":""}${ks[0]?"El cim més alt del terme és "+ks[0].nm+", de "+sn(ks[0].alt)+" metres. ":""}${rs.length?"Hi passa "+(rs.length>1?"els rius "+spList(rs.map(r=>noRiu(r.nm)),4):"el riu "+noRiu(rs[0].nm))+".":""}`;}
-  else if(L==="esriv"){const r=esRivM[id];t=`Riu ${noRiu(r.nm)}. Fa uns ${sn(r.len)} quilòmetres. ${r.desc||""}`;}
-  else if(L==="esmt"){const m=esMtM[id];t=`${m.nm}. ${m.t==="cim"?"Muntanya":"Serralada"}${m.alt?" de "+sn(m.alt)+" metres":""}. ${m.desc||""}`;}
-  else if(L==="loc"){const p=locPM[id];t=`${p.nm}. ${LOCT[p.t]}${p.alt?" de "+sn(p.alt)+" metres":""}, al terme ${dA(SPAIN.mun[p.mun].nm)}. ${p.desc||""}`;}
-  else if(L==="locriv"){const r=locRM[id];t=`${r.nm}. ${r.t==="riu"?"Riu":r.t==="rambla"?"Rambla":"Barranc"}. Fa uns ${nf(r.len,1)} quilòmetres dins de la zona. ${r.desc?r.desc+" ":""}Passa per ${spList(r.muns.map(m=>SPAIN.mun[m].nm),6)}.${r.prof?" Comença a uns "+sn(r.prof[0][1])+" metres d'altitud.":""}`;}
-  else if(L==="locrt"){const r=locTM[id];t=`${r.nm}. Ruta de senderisme de ${nf(r.len,1)} quilòmetres${r.asc!=null?", amb "+sn(r.asc)+" metres de pujada":""}. Passa per ${spList(r.muns.map(m=>SPAIN.mun[m].nm),6)}.`;}
-  else if(L==="locpk"){const p=locKM[id];const rk=peakRank(p);t=`${p.nm}. Muntanya de ${sn(p.alt)} metres, al terme ${dA(SPAIN.mun[p.mun].nm)}. ${rk===1?"És el cim més alt de "+FNAME[p.k]:"És el cim número "+rk+" més alt de "+FNAME[p.k]}.`;}
+    t=T(`${p.nm}. Província de la comunitat: ${ccaaN(p.cc)}. La capital és ${p.cap}. Té ${nm} municipis${nc>1?" repartits en "+nc+" comarques":""}.`,
+      `${p.nm}. Provincia de la comunidad: ${ccaaN(p.cc)}. Su capital es ${p.cap}. Tiene ${nm} municipios${nc>1?" repartidos en "+nc+" comarcas":""}.`,
+      `${p.nm}. A province in ${ccaaN(p.cc)}. Its capital is ${p.cap}. It has ${nm} municipalities${nc>1?" in "+nc+" districts":""}.`);}
+  else if(L==="com"){const c=SPAIN.com[id];const ms=comMuns[id]||[];const pv=[...new Set(ms.map(m=>provN(m.slice(0,2))))];const few=ms.length<=8?spList(ms.map(munN),8):"";
+    t=T(`${c.nm}. Comarca de la comunitat: ${ccaaN(c.cc)}, província ${pv.length>1?"de "+spList(pv,3):dA(pv[0])}. ${c.cap?"La capital és "+c.cap+". ":""}Té ${ms.length} municipis${c.sup?" i "+sn(c.sup)+" quilòmetres quadrats":""}. ${few?"Són: "+few+".":""}`,
+      `${c.nm}. Comarca de ${ccaaN(c.cc)}, provincia de ${spList(pv,3)}. ${c.cap?"Su capital es "+c.cap+". ":""}Tiene ${ms.length} municipios${c.sup?" y "+sn(c.sup)+" kilómetros cuadrados":""}. ${few?"Son: "+few+".":""}`,
+      `${c.nm}. A district in ${ccaaN(c.cc)}, province of ${spList(pv,3)}. ${c.cap?"Its capital is "+c.cap+". ":""}It has ${ms.length} municipalities${c.sup?" and "+sn(c.sup)+" square kilometres":""}. ${few?"They are: "+few+".":""}`);}
+  else if(L==="mun"){const m=SPAIN.mun[id];const p=SPAIN.prov[id.slice(0,2)];const ks=LOCAL.peaks.filter(x=>x.mun===id);const rs=LOCAL.rivers.filter(r=>r.muns.includes(id)&&r.t==="riu").map(r=>noRiu(r.nm));
+    t=T(`${m.nm}. Municipi. Comarca: ${comN(m.com)}. Província: ${p.nm}. Comunitat: ${ccaaN(p.cc)}. ${LOCAL.notes[id]?dot(LOCAL.notes[id])+" ":""}${ks[0]?"El cim més alt del terme és "+ks[0].nm+", de "+sn(ks[0].alt)+" metres. ":""}${rs.length?"Hi passa "+(rs.length>1?"els rius "+spList(rs,4):"el riu "+rs[0])+".":""}`,
+      `${m.nm}. Municipio. Comarca: ${comN(m.com)}. Provincia: ${p.nm}. Comunidad: ${ccaaN(p.cc)}. ${ks[0]?"La cima más alta del término es "+ks[0].nm+", de "+sn(ks[0].alt)+" metros. ":""}${rs.length?"Pasa "+(rs.length>1?"por él los ríos "+spList(rs,4):"el río "+rs[0])+".":""}`,
+      `${m.nm}. A municipality in the district of ${comN(m.com)}, province of ${p.nm}, ${ccaaN(p.cc)}. ${ks[0]?"Its highest peak is "+ks[0].nm+", "+sn(ks[0].alt)+" metres high. ":""}${rs.length?(rs.length>1?"The rivers "+spList(rs,4)+" flow through it.":"The river "+rs[0]+" flows through it."):""}`);}
+  else if(L==="esriv"){const r=esRivM[id];t=T(`Riu ${noRiu(r.nm)}. Fa uns ${sn(r.len)} quilòmetres. ${r.desc||""}`,`Río ${noRiu(r.nm)}. Mide unos ${sn(r.len)} kilómetros.`,`The ${noRiu(r.nm)} river. It is about ${sn(r.len)} kilometres long.`);}
+  else if(L==="esmt"){const m=esMtM[id];t=T(`${m.nm}. ${m.t==="cim"?"Muntanya":"Serralada"}${m.alt?" de "+sn(m.alt)+" metres":""}. ${m.desc||""}`,`${m.nm}. ${m.t==="cim"?"Montaña":"Cordillera"}${m.alt?" de "+sn(m.alt)+" metros":""}.`,`${m.nm}. ${m.t==="cim"?"Mountain":"Mountain range"}${m.alt?", "+sn(m.alt)+" metres high":""}.`);}
+  else if(L==="loc"){const p=locPM[id];const ty=tx(LOCX,LOCT,p.t);t=T(`${p.nm}. ${ty}${p.alt?" de "+sn(p.alt)+" metres":""}, al terme ${dA(munN(p.mun))}. ${p.desc||""}`,`${p.nm}. ${ty}${p.alt?" de "+sn(p.alt)+" metros":""}, en el término de ${munN(p.mun)}.`,`${p.nm}. ${ty}${p.alt?", "+sn(p.alt)+" metres high":""}, in ${munN(p.mun)}.`);}
+  else if(L==="locriv"){const r=locRM[id];const ms=spList(r.muns.map(munN),6);t=T(`${r.nm}. ${r.t==="riu"?"Riu":r.t==="rambla"?"Rambla":"Barranc"}. Fa uns ${nf(r.len,1)} quilòmetres dins de la zona. ${r.desc?r.desc+" ":""}Passa per ${ms}.${r.prof?" Comença a uns "+sn(r.prof[0][1])+" metres d'altitud.":""}`,
+      `${r.nm}. ${r.t==="riu"?"Río":r.t==="rambla"?"Rambla":"Barranco"}. Mide unos ${nf(r.len,1)} kilómetros en la zona. Pasa por ${ms}.`,`${r.nm}. ${r.t==="riu"?"River":"Stream"}. About ${nf(r.len,1)} kilometres long in this area. It flows through ${ms}.`);}
+  else if(L==="locrt"){const r=locTM[id];const ms=spList(r.muns.map(munN),6);t=T(`${r.nm}. Ruta de senderisme de ${nf(r.len,1)} quilòmetres${r.asc!=null?", amb "+sn(r.asc)+" metres de pujada":""}. Passa per ${ms}.`,`${r.nm}. Ruta de senderismo de ${nf(r.len,1)} kilómetros${r.asc!=null?", con "+sn(r.asc)+" metros de subida":""}. Pasa por ${ms}.`,`${r.nm}. A ${nf(r.len,1)} kilometre hiking route${r.asc!=null?" with "+sn(r.asc)+" metres of climbing":""}. It goes through ${ms}.`);}
+  else if(L==="locpk"){const p=locKM[id];const rk=peakRank(p);t=T(`${p.nm}. Muntanya de ${sn(p.alt)} metres, al terme ${dA(munN(p.mun))}. ${rk===1?"És el cim més alt de "+FNAME[p.k]:"És el cim número "+rk+" més alt de "+FNAME[p.k]}.`,`${p.nm}. Montaña de ${sn(p.alt)} metros, en el término de ${munN(p.mun)}.`,`${p.nm}. A ${sn(p.alt)} metre mountain in ${munN(p.mun)}.`);}
   speak(t.replace(/\s+/g," ").trim());}
+function voicesFor(l){const s=window.speechSynthesis;if(!s)return [];const vs=s.getVoices().filter(v=>v.lang.toLowerCase().startsWith(l));const sc=v=>(/natural|neural|online/i.test(v.name)?3:0)+(/google/i.test(v.name)?2:0)+(/^ca/i.test(l)&&/valen/i.test(v.name+v.lang)?1:0)+(v.localService?0:1);return vs.sort((a,b)=>sc(b)-sc(a));}
+function voicePop(btn){let p=$("#vpop");if(p){p.remove();return;}p=document.createElement("div");p.id="vpop";p.className="card vpop";
+  const draw=()=>{const vs=voicesFor(VOX.lang);p.innerHTML=`<b>🔊 Idioma de la veu</b><div class="seg">${[["ca","Valencià / català"],["es","Castellano"],["en","English"]].map(([k,t])=>`<button data-vl="${k}" class="${VOX.lang===k?"on":""}">${t}</button>`).join("")}</div>
+    ${vs.length?`<label class="small">Veu</label><select id="vsel"><option value="">Automàtica (la millor)</option>${vs.map(v=>`<option value="${esc(v.name)}" ${VOX.voice===v.name?"selected":""}>${esc(v.name)}</option>`).join("")}</select>`:`<div class="small">⚠️ Este navegador no té cap veu en aquest idioma. Prova un altre idioma o un altre navegador (Chrome o Edge solen tindre veus millors).</div>`}
+    ${VOX.lang!=="ca"?`<div class="small">En castellà i anglés, el resum és més curt: les curiositats només estan en valencià.</div>`:""}
+    <div class="row"><button class="btn small" id="vtest">▶️ Provar</button><button class="btn sec small" id="vok">Fet</button></div>`;
+    p.querySelectorAll("[data-vl]").forEach(b=>b.onclick=()=>{VOX.lang=b.dataset.vl;VOX.voice="";store.set("mapa_veu",VOX);const sb=$("#sayset");if(sb)sb.textContent="⚙️ "+VOX.lang.toUpperCase();draw();});
+    const sl=p.querySelector("#vsel");if(sl)sl.onchange=()=>{VOX.voice=sl.value;store.set("mapa_veu",VOX);};
+    p.querySelector("#vtest").onclick=()=>{const s=$("#say");if(s)s.click();else speak(T("Hola! Així sona la veu.","¡Hola! Así suena la voz.","Hello! This is how the voice sounds."));};p.querySelector("#vok").onclick=()=>p.remove();};
+  draw();btn.insertAdjacentElement("afterend",p);}
+if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{const p=$("#vpop");if(p){p.remove();const b=$("#sayset");if(b)voicePop(b);}};
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#sayset");if(b){e.preventDefault();voicePop(b);}});
+new MutationObserver(()=>{const s=$("#say");if(s&&!$("#sayset")){s.insertAdjacentHTML("afterend",`<button class="btn sec" id="sayset" title="Idioma de la veu">⚙️ ${VOX.lang.toUpperCase()}</button>`);}}).observe(document.getElementById("side"),{childList:true,subtree:true});
 
 // ---------- confeti i animacions ----------
 function confetti(n){try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const c=document.createElement("canvas");c.className="confetti";document.body.appendChild(c);const W2=c.width=innerWidth,H2=c.height=innerHeight;const x=c.getContext("2d");
@@ -1911,7 +1968,7 @@ function renderMedals(back){const got=MEDS.filter(m=>meds[m[0]]).length;
 // ---------- mode escriure ----------
 function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=d3.range(n+1),c=[];for(let i=1;i<=m;i++){c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
 const wnorm=s=>norm(String(s).replace(/\(.*?\)/g,"")).replace(/^(l'|el |la |els |les |the )/,"").replace(/[^a-z0-9ñç]+/g," ").trim();
-function canWrite(Q){if(Q.kind!=="opt"||!setup.write)return false;if(["coords","super"].includes(Q.mode))return false;const a=String(Q.ans);return !/\d/.test(a)&&a.length<=40&&!/^(sí|no|nord|sud|est|oest|més|menys)\b/i.test(a);}
+function canWrite(Q){if(Q.kind!=="opt"||!setup.write||Q.noWrite)return false;if(["coords","super"].includes(Q.mode))return false;const a=String(Q.ans);return !/\d/.test(a)&&a.length<=40&&!/^(sí|no|nord|sud|est|oest|més|menys)\b/i.test(a);}
 function checkWrite(Q,v){const g=wnorm(v);if(!g)return {ok:false};const acc=(Q.accept||[Q.ans]).concat(String(Q.ans).includes(" (")?[String(Q.ans).split(" (")[0]]:[]);
   for(const a of acc){const t=wnorm(a);const tol=t.length>=10?2:t.length>=5?1:0;const d=lev(g,t);if(d<=tol)return {ok:true,exact:d===0,ans:a};}return {ok:false};}
 function bindWrite(){const i=$("#wq");const go=()=>{if(quiz.answered)return;const v=i.value.trim();if(!v){i.focus();return;}const r=checkWrite(quiz.Q,v);i.disabled=true;$("#wgo").disabled=true;
@@ -2054,7 +2111,7 @@ function relSample(R,lon,lat){const [x0,y0,x1,y1]=R.box;if(lon<x0||lon>=x1||lat>
 const gRel=root.insert("g",()=>gPhys.node()).attr("class","relief").style("pointer-events","none");
 const esRel=esRoot.insert("g",()=>eg.border.node()).attr("class","relief").style("pointer-events","none");
 let relT=null;
-function relSchedule(){clearTimeout(relT);relT=setTimeout(relRender,160);}
+function relSchedule(){clearTimeout(relT);relT=setTimeout(relRender,160);if(typeof tzDraw==="function")tzDraw();}
 async function relRender(){
   const es=scene==="es";const g=es?esRel:gRel;const on=!(game&&game.kind==="fill")&&(es?esLayers.rel:layersOn.rel);
   gRel.style("display",!es&&on?null:"none");esRel.style("display",es&&on?null:"none");if(!on)return;
@@ -2070,7 +2127,164 @@ async function relRender(){
   if(es){let cp=esRoot.select("#esclip");if(cp.empty()){cp=esRoot.append("clipPath").attr("id","esclip");cp.append("path");esRel.attr("clip-path","url(#esclip)");}cp.select("path").attr("d",pathES({type:"FeatureCollection",features:esCcaa}));}
   const op=es?Math.max(.5,Math.min(1,1.2-t.k*.02)):Math.max(0,Math.min(1,1.15-t.k*.11));g.style("opacity",op);if(op<=0)return;
   g.selectAll("image").data([0]).join("image").attr("x",-t.x/t.k).attr("y",-t.y/t.k).attr("width",W/t.k).attr("height",H/t.k).attr("preserveAspectRatio","none").attr("href",c.toDataURL("image/png"));}
-window.__dbg={relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};
+
+// ---------- banderes: grups, opcions, semblança i pistes ----------
+const TOPC="ESP FRA ITA PRT DEU GBR USA CAN MEX BRA ARG CHN JPN IND RUS AUS EGY ZAF MAR GRC NLD BEL CHE KOR TUR SWE NOR DNK FIN IRL AUT POL UKR CHL COL PER CUB VEN URY NZL SAU ISR IRN IDN THA VNM NGA KEN DZA PAK PHL MYS SGP IRQ ARE CZE HUN ROU BGR HRV SRB ISL LUX AND MCO VAT BOL ECU PRY CRI PAN DOM JAM ETH GHA SEN TUN CMR COD TZA AGO MOZ MDG AFG BGD NPL LKA MNG PRK KAZ QAT SYR LBN JOR KWT SVK SVN EST LVA LTU".split(" ");
+const isFlagMode=id=>id==="flag"||id==="flagrev";
+const FSETS=[["easy","😊 Les més conegudes"],["t25","⭐ 25 països importants"],["t50","50"],["t100","100"],["all","🔥 Totes"]];
+function flagPool(){const fs=setup.fset||"easy";let p;
+  if(setup.custom&&setup.useCustom)return COUNTRIES.filter(c=>setup.custom.includes(c.id));
+  if(fs[0]==="t"){const n=+fs.slice(1);const s=new Set(TOPC.slice(0,n));p=COUNTRIES.filter(c=>s.has(c.id));}else p=COUNTRIES.filter(c=>fs==="all"||c.easy);
+  return p.filter(c=>setup.cont==="Tot"||c.co===setup.cont);}
+const iso2=c=>[...c.f].map(ch=>String.fromCharCode(ch.codePointAt(0)-127397)).join("");
+const FCOL={};
+function flagCols(c){if(FCOL[c.id])return FCOL[c.id];const svg=FLAGS[iso2(c)]||"";const out=new Set();let k=0;
+  svg.replace(/<(path|rect|circle|polygon|ellipse|g)\b([^>]*)>/g,(m,t,a)=>{if(k>=4)return m;const f=(a.match(/fill="(#[0-9a-fA-F]{3,6})"/)||[])[1]||(/fill=/.test(a)?null:(t==="g"?null:"#000"));if(!f)return m;k++;
+    let h=f.slice(1);if(h.length===3)h=h.split("").map(x=>x+x).join("");const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;if(l>.88&&d<.15){out.add("blanc");return m;}if(l<.16){out.add("negre");return m;}if(d<.12)return m;
+    let hu=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hu=(hu*60+360)%360;out.add(hu<15||hu>=340?"roig":hu<42?"taronja":hu<70?"groc":hu<170?"verd":hu<260?"blau":"morat");return m;});
+  return FCOL[c.id]=out;}
+function flagSim(a,b){const A=flagCols(a),B=flagCols(b);let i=0;A.forEach(x=>{if(B.has(x))i++;});const u=A.size+B.size-i;return u?i/u:0;}
+function flagDistract(c){const n=Math.max(1,(setup.fopts||4)-1);const hard=setup.fsim==="hard";
+  let cand=COUNTRIES.filter(x=>x!==c&&FLAGS[iso2(x)]&&x.f!==c.f);
+  const known=flagPool();const big=COUNTRIES.filter(x=>x.easy||known.includes(x));if(known.length>=n*3)cand=cand.filter(x=>known.includes(x));else cand=cand.filter(x=>big.includes(x));
+  cand=shuffle(cand).map(x=>({x,s:flagSim(c,x)+(x.co===c.co?.25:0)+Math.random()*.15}));
+  cand.sort((a,b)=>hard?b.s-a.s:a.s-b.s);const out=[],seen=new Set();for(const {x} of cand){if(seen.has(x.nm))continue;seen.add(x.nm);out.push(x);if(out.length>=n)break;}return out;}
+const COLNM={blanc:"blanc",negre:"negre",roig:"roig",taronja:"taronja",groc:"groc",verd:"verd",blau:"blau",morat:"morat"};
+function flagHints(c){const cols=[...flagCols(c)];return [`🌍 És un país ${dA(c.co)}.`,`🏙️ La capital és ${c.cap}.`,`🔤 El nom comença per «${c.nm[0]}» i té ${c.nm.replace(/[^\p{L}]/gu,"").length} lletres.`,"✂️ Lleve la meitat de les opcions incorrectes."];}
+function flagSetupHtml(){return `<div><h3>🚩 Quines banderes</h3><div class="seg" id="sfs">${FSETS.map(([v,t])=>`<button data-v="${v}" class="${(setup.fset||"easy")===v?"on":""}">${t}</button>`).join("")}</div>
+  <div class="small">${flagPool().length} banderes${setup.cont!=="Tot"?" ("+setup.cont+")":""}. Es pot combinar amb el continent de dalt.</div></div>
+  <div><h3>Nombre d'opcions</h3><div class="seg" id="sfo">${[2,3,4,6].map(n=>`<button data-v="${n}" class="${(setup.fopts||4)===n?"on":""}">${n}</button>`).join("")}</div></div>
+  <div><h3>Les opcions incorrectes</h3><div class="seg" id="sfm"><button data-v="easy" class="${setup.fsim!=="hard"?"on":""}">😊 Banderes molt diferents</button><button data-v="hard" class="${setup.fsim==="hard"?"on":""}">🔥 Banderes semblants</button></div></div>
+  <div><label class="ck"><input type="checkbox" id="sfh" ${setup.fhint!==false?"checked":""}> 💡 Deixar demanar pistes</label></div>`;}
+function bindFlagSetup(){const re=()=>{store.set("mapa_setup",setup);const st=side.scrollTop;renderQuizSetup();side.scrollTop=st;};
+  side.querySelectorAll("#sfs button").forEach(b=>b.onclick=()=>{setup.fset=b.dataset.v;re();});
+  side.querySelectorAll("#sfo button").forEach(b=>b.onclick=()=>{setup.fopts=+b.dataset.v;re();});
+  side.querySelectorAll("#sfm button").forEach(b=>b.onclick=()=>{setup.fsim=b.dataset.v;re();});
+  const h=$("#sfh");if(h)h.onchange=()=>{setup.fhint=h.checked;re();};}
+function bindHints(){const Q=quiz.Q;const b=$("#hintb");if(!b)return;Q.hi=Q.hi||0;
+  b.onclick=()=>{if(quiz.answered||Q.hi>=Q.hints.length)return;const t=Q.hints[Q.hi++];quiz.hinted=true;
+    if(/^✂️/.test(t)){const wrong=[...side.querySelectorAll(".opt")].filter(x=>Q.opts[+x.dataset.i]!==Q.ans);shuffle(wrong).slice(0,Math.ceil(wrong.length/2)).forEach(x=>{x.disabled=true;x.style.opacity=.25;});}
+    $("#hints").insertAdjacentHTML("beforeend",`<div class="hintline popin">${esc(t)}</div>`);
+    b.textContent=Q.hi<Q.hints.length?`💡 Una altra pista (${Q.hints.length-Q.hi})`:"💡 No hi ha més pistes";if(Q.hi>=Q.hints.length)b.disabled=true;};}
+
+// ---------- joc: prepara un viatge ----------
+const YF=new Set("AGO BEN BFA BDI CMR CAF TCD COG COD CIV GNQ ETH GAB GMB GHA GIN GNB KEN LBR MLI MRT NER NGA SEN SLE SSD SDN TGO UGA ARG BOL BRA COL ECU GUY PAN PRY PER SUR TTO VEN".split(" "));
+const RICH=new Set("USA CAN AUS NZL JPN KOR SGP ISR TWN".split(" "));
+const vacOf=c=>YF.has(c.id)?2:(c.co==="Europa"||RICH.has(c.id))?0:1;
+const VACS=["Només les vacunes de sempre (cap d'especial)","Hepatitis A i febre tifoide (recomanades)","Febre groga (i també hepatitis A i tifoide)"];
+const MONTHS=["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"];
+function seasonOf(lat,m){if(Math.abs(lat)<23.5)return "Fa calor tot l'any (zona tropical)";const n=["Hivern","Hivern","Primavera","Primavera","Primavera","Estiu","Estiu","Estiu","Tardor","Tardor","Tardor","Hivern"][m];if(lat>=0)return n;return {Hivern:"Estiu",Estiu:"Hivern",Primavera:"Tardor",Tardor:"Primavera"}[n];}
+const HB=[[0,3,"Menys de 3 hores"],[3,6,"Entre 3 i 6 hores"],[6,10,"Entre 6 i 10 hores"],[10,15,"Entre 10 i 15 hores"],[15,99,"Més de 15 hores"]];
+let tripCfg=Object.assign({from:"ESP",to:""},store.get("mapa_viatge",{}));
+function tripSetup(){game=null;d3.selectAll(".flightln").remove();recolor();
+  const opts=ALLC.map(c=>`<option value="${c.id}">${esc(c.nm)}</option>`).join("");
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>✈️ Prepara un viatge</h2>
+  <p class="hint">Organitza un viatge a un altre país: com hi arribes, quant dura el vol, quina llengua es parla, què menjaràs, quines vacunes et cal posar… Al final tindràs el teu <b>quadern de viatge</b> per a imprimir.</p>
+  <div class="card"><label><b>🏠 Eixim de</b></label><select id="tfrom">${opts}</select>
+  <label style="margin-top:8px"><b>🧳 Anem a</b></label><select id="tto"><option value="">🎲 Un país a l'atzar</option>${opts}</select></div>
+  <button class="btn" id="tgo" style="font-size:19px;padding:14px">Preparar el viatge ✈️</button>`;
+  $("#tfrom").value=tripCfg.from;$("#tto").value=tripCfg.to||"";
+  $("#gb").onclick=renderGamesMenu;
+  $("#tgo").onclick=()=>{tripCfg.from=$("#tfrom").value;tripCfg.to=$("#tto").value;store.set("mapa_viatge",tripCfg);let to=tripCfg.to;
+    if(!to||to===tripCfg.from){const p=COUNTRIES.filter(c=>c.easy&&c.id!==tripCfg.from&&c.capC);to=pick(p).id;}startTrip(tripCfg.from,to);};}
+function tripSteps(o,c){const S=[];const others=COUNTRIES.filter(x=>x!==c);const dis=(k,n)=>shuffle([...new Set(shuffle(others).map(x=>x[k]).filter(v=>v&&v!==c[k]))]).slice(0,n);
+  const km=Math.round(d3.geoDistance(o.capC,c.capC)*6371);const h=km/800+.7;const hb=HB.find(b=>h>=b[0]&&h<b[1]);
+  S.push({ic:"🌍",k:"Continent",q:`En quin continent està ${esc(c.nm)}?`,ans:c.co,opts:shuffle([c.co].concat(shuffle(CONT_ORDER.filter(x=>x!==c.co)).slice(0,3))),info:""});
+  S.push({ic:"🛬",k:"Aeroport",q:`Volarem a la capital. En quina ciutat aterrarem?`,ans:c.cap,opts:shuffle([c.cap].concat(dis("cap",3))),info:c.ct&&c.ct.length?`Altres ciutats importants: ${c.ct.slice(0,3).map(x=>x[0]).join(", ")}.`:""});
+  if(o.id!==c.id)S.push({ic:"✈️",k:"Durada del viatge",q:`Des de ${esc(o.cap)} fins a ${esc(c.cap)} hi ha uns <b>${nf(km,0)} km</b>. Quant durarà, més o menys, el vol?`,ans:hb[2],opts:HB.map(b=>b[2]).filter(x=>x===hb[2]||Math.random()<.75).slice(0,4).concat([]).filter((v,i,a)=>a.indexOf(v)===i),
+    info:`Un avió va a uns 800 km/h: unes <b>${Math.max(1,Math.round(h))} hores</b>.${km>7000?" Segurament caldrà fer escala.":""}${o.nb.includes(c.id)?" Com que són països veïns, també s'hi pot anar per terra (cotxe, tren o autobús): unes "+Math.max(2,Math.round(km/80))+" hores.":""}`});
+  S.push({ic:"🗣️",k:"Llengua",q:`Quina llengua sentirem parlar allí?`,ans:c.lg,opts:shuffle([c.lg].concat(dis("lg",3))),info:c.lc||""});
+  if(c.cu)S.push({ic:"💶",k:"Moneda",q:`Amb quina moneda pagarem?`,ans:c.cu,opts:shuffle([c.cu].concat(dis("cu",3))),info:o.cu===c.cu?"És la mateixa moneda que a casa: no cal canviar diners!":"Haurem de canviar diners o pagar amb targeta."});
+  S.push({ic:"🍽️",k:"Menjar",q:`Quin plat típic tastarem?`,ans:c.pl,opts:shuffle([c.pl].concat(dis("pl",3))),info:""});
+  const v=vacOf(c);S.push({ic:"💉",k:"Vacunes",q:`Quines vacunes ens hauríem de posar abans d'anar-hi?`,ans:VACS[v],opts:VACS.slice(),info:`${v===2?"Hi ha risc de febre groga: és una vacuna que alguns països demanen per a entrar. ":""}Informació orientativa: abans d'un viatge de veritat, cal demanar cita al <b>Centre de Vacunació Internacional</b>.`});
+  const m=new Date().getMonth();const se=seasonOf(c.capC[1],m);S.push({ic:"🌡️",k:"Temps",q:`Si hi anem ara, al mes de ${MONTHS[m]}, quina estació serà allí?`,ans:se,opts:["Primavera","Estiu","Tardor","Hivern","Fa calor tot l'any (zona tropical)"].filter(x=>x===se||Math.random()<.8).slice(0,4).filter((v,i,a)=>a.indexOf(v)===i),
+    info:c.capC[1]<-23.5?"Està a l'hemisferi sud: les estacions van al revés que a Europa.":Math.abs(c.capC[1])<23.5?"Està prop de l'equador, entre els tròpics.":"Està a l'hemisferi nord, com Espanya."});
+  if(c.mo)S.push({ic:"🏛️",k:"Monument",q:`Quin monument famós podrem visitar?`,ans:c.mo,opts:shuffle([c.mo].concat(dis("mo",3))),info:""});
+  if(c.an)S.push({ic:"🐾",k:"Animal",q:`Quin animal és un símbol del país?`,ans:c.an,opts:shuffle([c.an].concat(dis("an",3))),info:""});
+  const nb=c.nb.filter(x=>byId[x]);if(nb.length){const r=byId[pick(nb)];S.push({ic:"🚗",k:"Escapada",q:`Ens sobra un dia. A quin d'aquests països podem anar <b>per terra</b>?`,ans:r.nm,opts:shuffle([r.nm].concat(shuffle(COUNTRIES.filter(x=>x!==c&&!c.nb.includes(x.id)&&x.co===c.co).concat(shuffle(COUNTRIES).slice(0,5)).filter(x=>x!==c&&!c.nb.includes(x.id))).map(x=>x.nm).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3))),info:`Fa frontera amb: ${nb.map(x=>byId[x].nm).join(", ")}.`});}
+  S.forEach(s=>{if(!s.opts.includes(s.ans))s.opts[s.opts.length-1]=s.ans;s.opts=s.k==="Durada del viatge"||s.k==="Vacunes"||s.k==="Temps"?s.opts:shuffle(s.opts);});
+  return {S,km};}
+function startTrip(from,to){const o=byId[from],c=byId[to];const {S,km}=tripSteps(o,c);
+  game={kind:"trip",o,c,S,km,i:0,ok:0,ans:[],cols:{[o.id]:"#3b6fb6",[c.id]:"#f0a830"},done:false};recolor();
+  d3.selectAll(".flightln").remove();if(!isGlobe()){root.insert("path",()=>gPhys.node()).attr("class","flightln").attr("d",path({type:"LineString",coordinates:[o.capC,c.capC]})).attr("fill","none").attr("stroke","#173a5e").attr("stroke-width",2.5).attr("stroke-dasharray","6 5").attr("vector-effect","non-scaling-stroke").style("pointer-events","none");
+    zoomToBounds(path.bounds({type:"FeatureCollection",features:[featBy[o.id],featBy[c.id]].filter(Boolean)}),6);}else zoomToCountry(c.id);
+  renderTrip();}
+function renderTrip(){const g=game;const s=g.S[g.i];
+  const head=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>✈️ Viatge a ${g.c.f} ${esc(g.c.nm)}</h2><div class="small">Eixim de ${g.o.f} ${esc(g.o.nm)} · ${nf(g.km,0)} km</div>`;
+  if(g.done){const pct=Math.round(g.ok/g.S.length*100);
+    side.innerHTML=head+`<div class="card"><div class="row" style="justify-content:space-between"><div><div class="statbig">${g.ok}/${g.S.length}</div><div class="small">encerts</div></div><div class="statbig" style="color:var(--accent)">${pct}%</div></div></div>
+    <h3>📒 El teu quadern de viatge</h3><div class="card tripbook">${g.S.map((s,i)=>`<div><span>${s.ic} <b>${s.k}:</b> ${esc(s.ans)}</span><span>${g.ans[i]?"✅":"❌"}</span></div>`).join("")}</div>
+    <div class="row"><button class="btn" id="tnew">🧳 Un altre viatge</button><button class="btn sec" id="tprint">🖨️ Imprimir el quadern</button></div>`;
+    $("#gb").onclick=renderGamesMenu;$("#tnew").onclick=tripSetup;
+    $("#tprint").onclick=()=>{$("#printarea").innerHTML=`<div class="prpage"><div class="prhead"><h1>✈️ Quadern de viatge: ${g.c.f} ${esc(g.c.nm)}</h1><span>Nom: ______________________________</span></div>
+      <p>Eixim de <b>${esc(g.o.nm)}</b> (${esc(g.o.cap)}) i anem a <b>${esc(g.c.nm)}</b> (${esc(g.c.cap)}). Distància: ${nf(g.km,0)} km.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:15px">${g.S.map(s=>`<tr><td style="border:1px solid #999;padding:6px;width:30%">${s.ic} <b>${s.k}</b></td><td style="border:1px solid #999;padding:6px">${esc(s.ans)}<div style="font-size:12px;color:#444">${s.info.replace(/<[^>]+>/g,"")}</div></td></tr>`).join("")}</table>
+      <p style="margin-top:14px"><b>Què més posaries a la maleta?</b> ________________________________________________</p></div>`;
+      document.body.classList.add("printing");setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove("printing"),500);},100);};
+    if(pct>=80)confetti(140);return;}
+  side.innerHTML=head+`<div class="bar"><div style="width:${g.i/g.S.length*100}%;background:var(--accent)"></div></div>
+  <div class="small">Pas ${g.i+1} de ${g.S.length} · ✅ ${g.ok}</div><h3>${s.ic} ${s.k}</h3><div class="qtext">${s.q}</div>
+  <div class="opts">${s.opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join("")}</div><div id="fbk"></div>`;
+  $("#gb").onclick=()=>{d3.selectAll(".flightln").remove();renderGamesMenu();};
+  side.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(g.ans.length>g.i)return;const v=s.opts[+b.dataset.i];const ok=v===s.ans;g.ans.push(ok);if(ok)g.ok++;
+    side.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(s.opts[+x.dataset.i]===s.ans)x.classList.add("ok");});if(!ok)b.classList.add("ko");
+    $("#fbk").innerHTML=`<div class="fb ${ok?"ok":"ko"}">${ok?"✓ Molt bé!":"✗ És: "+esc(s.ans)}</div>${s.info?`<div class="small" style="margin:6px 0">${s.info}</div>`:""}<button class="btn" id="tnx">${g.i+1<g.S.length?"Següent ▶":"Vore el quadern 📒"}</button>`;
+    $("#tnx").onclick=()=>{g.i++;if(g.i>=g.S.length)g.done=true;renderTrip();};$("#tnx").focus();});}
+const TZC={AFG:"Asia/Kabul",AGO:"Africa/Luanda",ALB:"Europe/Tirane",AND:"Europe/Andorra",ARE:"Asia/Dubai",ARG:"America/Argentina/Buenos_Aires",ARM:"Asia/Yerevan",ATG:"America/Antigua",AUS:"Australia/Sydney",AUT:"Europe/Vienna",AZE:"Asia/Baku",BDI:"Africa/Bujumbura",BEL:"Europe/Brussels",BEN:"Africa/Porto-Novo",BFA:"Africa/Ouagadougou",BGD:"Asia/Dhaka",BGR:"Europe/Sofia",BHR:"Asia/Bahrain",BHS:"America/Nassau",BIH:"Europe/Sarajevo",BLR:"Europe/Minsk",BLZ:"America/Belize",BOL:"America/La_Paz",BRA:"America/Sao_Paulo",BRB:"America/Barbados",BRN:"Asia/Brunei",BTN:"Asia/Thimphu",BWA:"Africa/Gaborone",CAF:"Africa/Bangui",CAN:"America/Toronto",CHE:"Europe/Zurich",CHL:"America/Santiago",CHN:"Asia/Shanghai",CIV:"Africa/Abidjan",CMR:"Africa/Douala",COD:"Africa/Kinshasa",COG:"Africa/Brazzaville",COL:"America/Bogota",COM:"Indian/Comoro",CPV:"Atlantic/Cape_Verde",CRI:"America/Costa_Rica",CUB:"America/Havana",CYP:"Asia/Nicosia",CZE:"Europe/Prague",DEU:"Europe/Berlin",DJI:"Africa/Djibouti",DMA:"America/Dominica",DNK:"Europe/Copenhagen",DOM:"America/Santo_Domingo",DZA:"Africa/Algiers",ECU:"America/Guayaquil",EGY:"Africa/Cairo",ERI:"Africa/Asmara",ESP:"Europe/Madrid",EST:"Europe/Tallinn",ETH:"Africa/Addis_Ababa",FIN:"Europe/Helsinki",FJI:"Pacific/Fiji",FRA:"Europe/Paris",FSM:"Pacific/Pohnpei",GAB:"Africa/Libreville",GBR:"Europe/London",GEO:"Asia/Tbilisi",GHA:"Africa/Accra",GIN:"Africa/Conakry",GMB:"Africa/Banjul",GNB:"Africa/Bissau",GNQ:"Africa/Malabo",GRC:"Europe/Athens",GRD:"America/Grenada",GTM:"America/Guatemala",GUY:"America/Guyana",HND:"America/Tegucigalpa",HRV:"Europe/Zagreb",HTI:"America/Port-au-Prince",HUN:"Europe/Budapest",IDN:"Asia/Jakarta",IND:"Asia/Kolkata",IRL:"Europe/Dublin",IRN:"Asia/Tehran",IRQ:"Asia/Baghdad",ISL:"Atlantic/Reykjavik",ISR:"Asia/Jerusalem",ITA:"Europe/Rome",JAM:"America/Jamaica",JOR:"Asia/Amman",JPN:"Asia/Tokyo",KAZ:"Asia/Almaty",KEN:"Africa/Nairobi",KGZ:"Asia/Bishkek",KHM:"Asia/Phnom_Penh",KIR:"Pacific/Tarawa",KNA:"America/St_Kitts",KOR:"Asia/Seoul",UNK:"Europe/Belgrade",KWT:"Asia/Kuwait",LAO:"Asia/Vientiane",LBN:"Asia/Beirut",LBR:"Africa/Monrovia",LBY:"Africa/Tripoli",LCA:"America/St_Lucia",LIE:"Europe/Vaduz",LKA:"Asia/Colombo",LSO:"Africa/Maseru",LTU:"Europe/Vilnius",LUX:"Europe/Luxembourg",LVA:"Europe/Riga",MAR:"Africa/Casablanca",MCO:"Europe/Monaco",MDA:"Europe/Chisinau",MDG:"Indian/Antananarivo",MDV:"Indian/Maldives",MEX:"America/Mexico_City",MHL:"Pacific/Majuro",MKD:"Europe/Skopje",MLI:"Africa/Bamako",MLT:"Europe/Malta",MMR:"Asia/Yangon",MNE:"Europe/Podgorica",MNG:"Asia/Ulaanbaatar",MOZ:"Africa/Maputo",MRT:"Africa/Nouakchott",MUS:"Indian/Mauritius",MWI:"Africa/Blantyre",MYS:"Asia/Kuala_Lumpur",NAM:"Africa/Windhoek",NER:"Africa/Niamey",NGA:"Africa/Lagos",NIC:"America/Managua",NLD:"Europe/Amsterdam",NOR:"Europe/Oslo",NPL:"Asia/Kathmandu",NRU:"Pacific/Nauru",NZL:"Pacific/Auckland",OMN:"Asia/Muscat",PAK:"Asia/Karachi",PAN:"America/Panama",PER:"America/Lima",PHL:"Asia/Manila",PLW:"Pacific/Palau",PNG:"Pacific/Port_Moresby",POL:"Europe/Warsaw",PRK:"Asia/Pyongyang",PRT:"Europe/Lisbon",PRY:"America/Asuncion",PSE:"Asia/Gaza",QAT:"Asia/Qatar",ROU:"Europe/Bucharest",RUS:"Europe/Moscow",RWA:"Africa/Kigali",SAU:"Asia/Riyadh",SDN:"Africa/Khartoum",SEN:"Africa/Dakar",SGP:"Asia/Singapore",SLB:"Pacific/Guadalcanal",SLE:"Africa/Freetown",SLV:"America/El_Salvador",SMR:"Europe/San_Marino",SOM:"Africa/Mogadishu",SRB:"Europe/Belgrade",SSD:"Africa/Juba",STP:"Africa/Sao_Tome",SUR:"America/Paramaribo",SVK:"Europe/Bratislava",SVN:"Europe/Ljubljana",SWE:"Europe/Stockholm",SWZ:"Africa/Mbabane",SYC:"Indian/Mahe",SYR:"Asia/Damascus",TCD:"Africa/Ndjamena",TGO:"Africa/Lome",THA:"Asia/Bangkok",TJK:"Asia/Dushanbe",TKM:"Asia/Ashgabat",TLS:"Asia/Dili",TON:"Pacific/Tongatapu",TTO:"America/Port_of_Spain",TUN:"Africa/Tunis",TUR:"Europe/Istanbul",TUV:"Pacific/Funafuti",TWN:"Asia/Taipei",TZA:"Africa/Dar_es_Salaam",UGA:"Africa/Kampala",UKR:"Europe/Kyiv",URY:"America/Montevideo",USA:"America/New_York",UZB:"Asia/Tashkent",VAT:"Europe/Vatican",VCT:"America/St_Vincent",VEN:"America/Caracas",VNM:"Asia/Ho_Chi_Minh",VUT:"Pacific/Efate",WSM:"Pacific/Apia",YEM:"Asia/Aden",ZAF:"Africa/Johannesburg",ZMB:"Africa/Lusaka",ZWE:"Africa/Harare"};
+// ---------- zones horàries i llum del Sol ----------
+const MULTITZ={USA:"Els Estats Units tenen diverses zones horàries (Nova York, Chicago, Denver, Los Angeles, Alaska, Hawaii). Ací es mostra la de Washington.",RUS:"Rússia té 11 zones horàries! Ací es mostra la de Moscou.",CAN:"El Canadà té 6 zones horàries. Ací es mostra la d'Ottawa.",AUS:"Austràlia té 3 zones horàries principals. Ací es mostra la de Canberra.",BRA:"El Brasil té 4 zones horàries. Ací es mostra la de Brasília.",MEX:"Mèxic té diverses zones horàries. Ací es mostra la de Ciutat de Mèxic.",IDN:"Indonèsia té 3 zones horàries. Ací es mostra la de Jakarta.",ESP:"Les illes Canàries tenen una hora menys que la Península i les Balears.",PRT:"Les illes Açores tenen una hora menys que la resta de Portugal.",CHL:"L'illa de Pasqua té 2 hores menys que Santiago.",ECU:"Les illes Galápagos tenen una hora menys.",MNG:"Mongòlia té 2 zones horàries.",COD:"La R. D. del Congo té 2 zones horàries.",KIR:"Kiribati té 3 zones horàries i és el primer país on comença el dia!",NZL:"Les illes Chatham van 45 minuts per davant.",FRA:"Amb els territoris d'ultramar, França té 12 zones horàries: és el país amb més!"};
+const tzZone=id=>{let z=TZC[id]||"UTC";try{new Intl.DateTimeFormat("en",{timeZone:z});}catch(e){z=z==="Europe/Kyiv"?"Europe/Kiev":"UTC";}return z;};
+const TZF={};function tzOffset(zone,d){try{const f=TZF[zone]||(TZF[zone]=new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"}));const p={};f.formatToParts(d).forEach(x=>p[x.type]=x.value);
+  const loc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute);return Math.round((loc-Math.floor(d.getTime()/60000)*60000)/60000);}catch(e){return 0;}}
+const offTxt=m=>"UTC"+(m>=0?"+":"−")+Math.floor(Math.abs(m)/60)+(Math.abs(m)%60?":"+String(Math.abs(m)%60).padStart(2,"0"):"");
+const hhmm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");};
+function sunPos(d){const n=(d.getTime()-Date.UTC(2000,0,1,12))/864e5;const rad=Math.PI/180;const L=(280.46+.9856474*n)%360,g=(357.528+.9856003*n)%360*rad;const lam=(L+1.915*Math.sin(g)+.02*Math.sin(2*g))*rad,eps=(23.439-4e-7*n)*rad;
+  const dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/rad;const gmst=((18.697374558+24.06570982441908*n)%24+24)%24;let lon=ra-gmst*15;lon=((lon+540)%360)-180;return [lon,dec/rad];}
+const sunAlt=(ll,sp)=>90-d3.geoDistance(ll,sp)*180/Math.PI;
+let tz={view:false,sel:"ESP",date:"today",min:null,color:true,play:null,utc:new Date()};
+const gNight=root.insert("g",()=>gPhys.node()).attr("class","night").style("pointer-events","none");
+function tzDay(){const now=new Date();const y=now.getUTCFullYear();return tz.date==="today"?[y,now.getMonth(),now.getDate()]:tz.date==="mar"?[y,2,20]:tz.date==="jun"?[y,5,21]:[y,11,21];}
+function tzCompute(){const z=tzZone(tz.sel);if(tz.min==null){const now=new Date();tz.min=Math.round((now.getUTCHours()*60+now.getUTCMinutes()+tzOffset(z,now))/15)*15%1440;}
+  const [y,m,d]=tzDay();let u=Date.UTC(y,m,d,0,0)+tz.min*60000;for(let i=0;i<2;i++)u=Date.UTC(y,m,d,0,0)+tz.min*60000-tzOffset(z,new Date(u))*60000;tz.utc=new Date(u);}
+function tzDraw(){const on=scene==="world"&&(tz.view||layersOn.night);gNight.style("display",on?null:"none");if(!on)return;if(!tz.view)tz.utc=new Date();
+  const sp=sunPos(tz.utc);const anti=[sp[0]+180,-sp[1]];const k=isGlobe()?1:d3.zoomTransform(svg.node()).k;
+  let cp=root.select("#sphclip");if(cp.empty()){cp=root.append("clipPath").attr("id","sphclip");cp.append("path");gNight.attr("clip-path","url(#sphclip)");}cp.select("path").attr("d",path({type:"Sphere"}));
+  const rs=[90,87,84,81,78];gNight.selectAll("path").data(rs).join("path").attr("d",r=>path(d3.geoCircle().center(anti).radius(r)())).attr("fill","#0b1f4a").attr("fill-opacity",(r,i)=>i===0?.16:.1).attr("stroke","none");
+  const p=proj(sp);const vis=p&&(!isGlobe()||d3.geoDistance(sp,[-proj.rotate()[0],-proj.rotate()[1]])<1.5);
+  gNight.selectAll("text").data(vis?[p]:[]).join("text").attr("x",d=>d[0]).attr("y",d=>d[1]).attr("text-anchor","middle").attr("dominant-baseline","middle").attr("font-size",26/k).text("☀️");}
+function tzFill(id){if(!(tz.view&&tz.color&&tab==="explore"&&scene==="world"))return null;const o=tzOffset(tzZone(id),tz.utc)/60;return d3.interpolateRgb(d3.interpolateRainbow(((o+12)/26)*.88+.02),"#ffffff")(.3);}
+const TZCITIES=[["Madrid","ESP",[-3.7,40.4]],["Londres","GBR",[-0.13,51.5]],["Nova York","USA",[-74,40.7]],["Los Angeles","USA",[-118.2,34.05],"America/Los_Angeles"],["Rio de Janeiro","BRA",[-43.2,-22.9]],["Moscou","RUS",[37.6,55.75]],["Dubai","ARE",[55.3,25.2]],["Delhi","IND",[77.2,28.6]],["Pequín","CHN",[116.4,39.9]],["Tòquio","JPN",[139.7,35.7]],["Sydney","AUS",[151.2,-33.9]],["Auckland","NZL",[174.8,-36.8]]];
+function lightIc(ll){const a=sunAlt(ll,sunPos(tz.utc));return a>-0.83?(a<8?"🌅":"☀️"):a>-12?"🌆":"🌙";}
+function clockSvg(min){const h=(min/60)%12,m=min%60;const a=h*30+m*.5,b=m*6;const hand=(ang,len,w,c)=>`<line x1="50" y1="50" x2="${50+len*Math.sin(ang*Math.PI/180)}" y2="${50-len*Math.cos(ang*Math.PI/180)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 100 100" width="96" height="96"><circle cx="50" cy="50" r="46" fill="var(--card)" stroke="var(--head,#173a5e)" stroke-width="4"/>${d3.range(12).map(i=>`<line x1="50" y1="8" x2="50" y2="${i%3?13:16}" stroke="#888" stroke-width="${i%3?1.5:3}" transform="rotate(${i*30} 50 50)"/>`).join("")}${hand(a,24,5,"#173a5e")}${hand(b,36,3,"#e2574c")}<circle cx="50" cy="50" r="3.5" fill="#173a5e"/></svg>`;}
+function renderTZ(){tz.view=true;tzCompute();const c=byId[tz.sel];const z=tzZone(tz.sel);const off=tzOffset(z,tz.utc);const sp=sunPos(tz.utc);const capL=lightIc(c.capC);
+  const mine=tzOffset(tzZone("ESP"),tz.utc);const diff=(off-mine)/60;
+  const offs=[...new Set(COUNTRIES.map(x=>tzOffset(tzZone(x.id),tz.utc)))].sort((a,b)=>a-b);
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="tzb">← Tornar</button></div><h2>🕐 Hores i llum del Sol</h2>
+  <p class="hint">Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com el dia i la nit es desplacen pel món.</p>
+  <div class="card"><div class="row" style="align-items:center;gap:12px">${clockSvg(tz.min)}<div><div class="big" style="font-size:22px">${c.f} ${esc(c.nm)}</div><div class="statbig" style="font-size:40px">${hhmm(tz.min)} ${capL}</div><div class="small">${offTxt(off)}${tz.sel!=="ESP"?` · ${diff===0?"la mateixa hora que a Espanya":(diff>0?diff+" h més que a Espanya":(-diff)+" h menys que a Espanya")}`:""}</div></div></div>
+  <input type="range" id="tzr" min="0" max="1425" step="15" value="${tz.min}" style="width:100%;margin-top:8px"><div class="row small" style="justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+  <div class="row"><button class="btn small" id="tzp">${tz.play?"⏸️ Parar":"▶️ Fer passar el dia"}</button><button class="btn sec small" id="tznow">🕐 Ara</button></div>
+  ${MULTITZ[tz.sel]?`<div class="small" style="margin-top:6px">ℹ️ ${MULTITZ[tz.sel]}</div>`:""}</div>
+  <div><h3>📅 Dia de l'any</h3><div class="seg" id="tzd">${[["today","Hui"],["mar","20 de març (equinocci)"],["jun","21 de juny (solstici)"],["dec","21 de desembre (solstici)"]].map(([k,t])=>`<button data-v="${k}" class="${tz.date===k?"on":""}">${t}</button>`).join("")}</div>
+  <div class="small">Ara el Sol cau perpendicular sobre la latitud <b>${nf(Math.abs(sp[1]),1)}° ${sp[1]>=0?"N":"S"}</b>. ${Math.abs(sp[1])>23?"És el dia de "+(sp[1]>0?"més":"menys")+" llum a l'hemisferi nord.":Math.abs(sp[1])<1.5?"El dia i la nit duren quasi igual a tot el món.":""}</div></div>
+  <div class="card"><h3 style="margin-top:0">🌍 Quina hora és a…</h3>${TZCITIES.map(([n,id,ll,zz])=>{const o=tzOffset(zz||tzZone(id),tz.utc);const loc=(tz.utc.getUTCHours()*60+tz.utc.getUTCMinutes()+o);return `<div class="row" style="justify-content:space-between;padding:2px 0"><span>${byId[id].f} ${n}</span><span><b>${hhmm(loc)}</b> ${lightIc(ll)} <span class="small">${offTxt(o)}</span></span></div>`;}).join("")}</div>
+  <label class="ck"><input type="checkbox" id="tzc" ${tz.color?"checked":""}> 🎨 Pintar els països segons la zona horària</label>
+  ${tz.color?`<div class="tzleg">${offs.map(o=>`<span><i style="background:${d3.interpolateRgb(d3.interpolateRainbow(((o/60+12)/26)*.88+.02),"#fff")(.3)}"></i>${offTxt(o).replace("UTC","")}</span>`).join("")}</div>`:""}
+  <div class="card small"><b>Per què hi ha zones horàries?</b> La Terra fa una volta sencera (360°) cada 24 hores, és a dir, gira <b>15° cada hora</b>. Per això, quan és migdia en un lloc, a 15° cap a l'est ja és la una, i a 15° cap a l'oest encara són les onze. Cada país tria la seua hora oficial, i per això les zones no són línies rectes. ☀️ marca on el Sol està just damunt del cap.</div>`;
+  $("#tzb").onclick=()=>{tzStop();tz.view=false;tzDraw();recolor();renderWelcome();};
+  $("#tzr").oninput=e=>{tz.min=+e.target.value;tzQuick();};$("#tzr").onchange=()=>renderTZ();
+  $("#tzp").onclick=()=>{if(tz.play)tzStop();else{tz.play=setInterval(()=>{tz.min=(tz.min+15)%1440;tzQuick(true);},90);}renderTZ();};
+  $("#tznow").onclick=()=>{tzStop();tz.date="today";tz.min=null;renderTZ();};
+  side.querySelectorAll("#tzd button").forEach(b=>b.onclick=()=>{tz.date=b.dataset.v;renderTZ();});
+  $("#tzc").onchange=e=>{tz.color=e.target.checked;renderTZ();};
+  tzDraw();recolor();}
+let tzT=0;function tzQuick(fromPlay){tzCompute();tzDraw();const n=Date.now();if(n-tzT>250){tzT=n;recolor();}const st=side.scrollTop;if(fromPlay){const r=$("#tzr");if(r)r.value=tz.min;}
+  const c=side.querySelector(".statbig");if(c)c.innerHTML=`${hhmm(tz.min)} ${lightIc(byId[tz.sel].capC)}`;const sv=side.querySelector(".card svg");if(sv)sv.outerHTML=clockSvg(tz.min);side.scrollTop=st;}
+function tzStop(){if(tz.play){clearInterval(tz.play);tz.play=null;}}
+
+window.__dbg={tz,renderTZ,tzOffset,sunPos,flagDistract,VOX,flagCols,flagSim,flagPool,relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
