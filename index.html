@@ -684,8 +684,7 @@ function onCountryClick(id){
   if(tab==="games"&&game&&!game.done){gameGuess(id);return;}
   if(tab==="explore"&&tz.view){tz.sel=id;tzStop();renderTZ();return;}
   selected=id;recolor();
-  if(tab==="places")renderPlace(id);else{if(tab!=="explore")setTab("explore",true);renderCountry(id);}
-  centerCountry(id);
+  if(tab==="places"){renderPlace(id);centerCountry(id);}else{if(tab!=="explore")setTab("explore",true);renderCountry(id);zoomToCountry(id);}
 }
 function onPhysClick(id){if(quiz&&quiz.running){quizMapClick("phys",id);return;}if(tab!=="explore")setTab("explore",true);selected=null;recolor();renderPhys(id);}
 
