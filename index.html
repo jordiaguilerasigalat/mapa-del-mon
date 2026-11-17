@@ -1576,10 +1576,10 @@ function bindGameInput(onPick){const i=$("#gq"),s=$("#gs");let res=[],ix=0;
   i.oninput=()=>{const v=norm(i.value.trim());if(!v){s.style.display="none";return;}res=ALLC.filter(c=>norm(c.nm).includes(v)).sort((a,b)=>(norm(a.nm).startsWith(v)?0:1)-(norm(b.nm).startsWith(v)?0:1)).slice(0,8);ix=0;s.innerHTML=res.map((c,k)=>`<div data-k="${k}" class="${k===0?"sel":""}">${c.f} ${esc(c.nm)}</div>`).join("")||`<div class="small">Cap país</div>`;s.style.display="block";};
   i.onkeydown=e=>{if(e.key==="Enter"&&res[ix]){s.style.display="none";i.value="";onPick(res[ix].id);}else if(e.key==="ArrowDown"){ix=Math.min(ix+1,res.length-1);[...s.children].forEach((d,k)=>d.classList.toggle("sel",k===ix));}else if(e.key==="ArrowUp"){ix=Math.max(ix-1,0);[...s.children].forEach((d,k)=>d.classList.toggle("sel",k===ix));}};
   s.onclick=e=>{const d=e.target.closest("[data-k]");if(d){s.style.display="none";i.value="";onPick(res[+d.dataset.k].id);}};setTimeout(()=>i.focus(),50);}
-function startGloble(daily){
-  const pool=GPOOL();const t=today();let saved=daily?store.get("mapa_daily_globle",{}):{};
+function startGloble(daily,rep){
+  const pool=GPOOL();const t=today();let saved=daily&&!rep?store.get("mapa_daily_globle",{}):{};
   const target=daily?pool[hashStr(t+"globle")%pool.length].id:pick(pool).id;
-  game={kind:"globle",daily,target,guesses:[],cols:{},done:false,won:false,max:gMax};
+  game={kind:"globle",daily:daily&&!rep,rep:!!rep,target,guesses:[],cols:{},done:false,won:false,max:gMax};
   if(daily&&saved.date===t){game.guesses=saved.guesses||[];game.done=!!saved.done;game.won=saved.won!=null?!!saved.won:game.guesses.some(g=>g.id===target);if(saved.max!=null)game.max=saved.max;}
   game.guesses.forEach(g=>game.cols[g.id]=heat(g.d));if(game.done)game.cols[target]="#2e9e5b";
   $("#zreset").onclick();recolor();renderGloble();
@@ -1592,22 +1592,23 @@ function globleGuess(id){if(game.done)return;if(game.guesses.some(g=>g.id===id))
   if(game.daily)store.set("mapa_daily_globle",{date:today(),guesses:game.guesses,done:game.done,won:game.won,max:game.max});recolor();renderGloble();}
 function renderGloble(){
   const gs=game.guesses.slice().sort((a,b)=>a.d-b.d);const t=byId[game.target];
-  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🌡️ País misteriós ${game.daily?"del dia":"(pràctica)"}</h2>
-  ${game.done?(game.won?`<div class="fb ok">🎉 Era ${t.f} ${esc(t.nm)}! Ho has endevinat en ${game.guesses.length} intents${game.max?` (de ${game.max})`:""}.</div>`:`<div class="fb ko">😕 ${game.max&&game.guesses.length>=game.max?`S'han acabat els ${game.max} intents. `:""}Era ${t.f} ${esc(t.nm)}.</div>`)+`<button class="btn sec" id="gi">ℹ️ Fitxa de ${esc(t.nm)}</button>`:`<p class="hint">Escriu un país o toca'l al mapa. El color et diu com de prop estàs: 🟥 molt a prop, 🟧 a prop, 🟨 lluny. 0 km vol dir que fa frontera.</p>${gameInput()}`}
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🌡️ País misteriós ${game.daily?"del dia":game.rep?"del dia (repetició)":"(pràctica)"}</h2>
+  ${game.done?(game.won?`<div class="fb ok">🎉 Era ${t.f} ${esc(t.nm)}! Ho has endevinat en ${game.guesses.length} intents${game.max?` (de ${game.max})`:""}.</div>`:`<div class="fb ko">😕 ${game.max&&game.guesses.length>=game.max?`S'han acabat els ${game.max} intents. `:""}Era ${t.f} ${esc(t.nm)}.</div>`)+`<div class="row"><button class="btn sec" id="gi">ℹ️ Fitxa de ${esc(t.nm)}</button>${game.daily||game.rep?`<button class="btn" id="grep">🔁 Repetir el d'avui</button>`:`<button class="btn" id="grep2">🎲 Un altre</button>`}</div>`:`<p class="hint">Escriu un país o toca'l al mapa. El color et diu com de prop estàs: 🟥 molt a prop, 🟧 a prop, 🟨 lluny. 0 km vol dir que fa frontera.</p>${gameInput()}`}
   <div class="small">${game.guesses.length} intents${game.max?` de ${game.max}`+(game.done?"":` · <b>en queden ${game.max-game.guesses.length}</b>`):""}</div>
   <div style="display:grid;gap:5px">${gs.map(g=>`<div class="guess" style="background:${game.cols[g.id]};${g.d<2500&&g.id!==game.target?"color:#fff":""}"><span>${byId[g.id].f} ${esc(byId[g.id].nm)}</span><span>${g.id===game.target?"🎯":nf(g.d,0)+" km"}</span><span></span></div>`).join("")}</div>
   ${!game.done&&game.guesses.length>=8?`<button class="btn warn small" id="gr">🏳️ Rendir-se</button>`:""}`;
   $("#gb").onclick=renderGamesMenu;
+  {const r=$("#grep");if(r)r.onclick=()=>startGloble(true,true);const r2=$("#grep2");if(r2)r2.onclick=()=>startGloble(false);}
   if(!game.done)bindGameInput(globleGuess);else $("#gi").onclick=()=>{const id=game.target;setTab("explore",true);selected=id;recolor();renderCountry(id,true);};
   const gr=$("#gr");if(gr)gr.onclick=()=>{game.done=true;game.won=false;game.cols[game.target]="#2e9e5b";if(game.daily)store.set("mapa_daily_globle",{date:today(),guesses:game.guesses,done:true,won:false,max:game.max});recolor();zoomToCountry(game.target);renderGloble();toast("Era "+t.nm);};
 }
 function cent(id){const f=featBy[id];return f?d3.geoCentroid(f):byId[id].capC;}
 function bearing(a,b){const r=Math.PI/180;const y=Math.sin((b[0]-a[0])*r)*Math.cos(b[1]*r);const x=Math.cos(a[1]*r)*Math.sin(b[1]*r)-Math.sin(a[1]*r)*Math.cos(b[1]*r)*Math.cos((b[0]-a[0])*r);return (Math.atan2(y,x)/r+360)%360;}
 const ARROWS=["⬆️","↗️","➡️","↘️","⬇️","↙️","⬅️","↖️"];
-function startSil(daily){
-  const pool=WPOOL();const t=today();const saved=daily?store.get("mapa_daily_silueta",{}):{};
+function startSil(daily,rep){
+  const pool=WPOOL();const t=today();const saved=daily&&!rep?store.get("mapa_daily_silueta",{}):{};
   const target=daily?pool[hashStr(t+"silueta")%pool.length].id:pick(pool).id;
-  game={kind:"sil",daily,target,guesses:[],cols:{},done:false,won:false};
+  game={kind:"sil",daily:daily&&!rep,rep:!!rep,target,guesses:[],cols:{},done:false,won:false};
   if(daily&&saved.date===t){game.guesses=saved.guesses||[];game.done=!!saved.done;game.won=!!saved.won;}
   recolor();renderSil();
 }
@@ -1619,13 +1620,14 @@ function silGuess(id){if(game.done)return;if(game.guesses.some(g=>g.id===id)){to
   if(game.daily)store.set("mapa_daily_silueta",{date:today(),guesses:game.guesses,done:game.done,won:game.won});recolor();renderSil();}
 function renderSil(){
   const t=byId[game.target];
-  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🧩 Silueta ${game.daily?"del dia":"(pràctica)"}</h2>
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🧩 Silueta ${game.daily?"del dia":game.rep?"del dia (repetició)":"(pràctica)"}</h2>
   <svg class="silh" id="silsvg" viewBox="0 0 300 220"></svg>
-  ${game.done?(game.won?`<div class="fb ok">🎉 Correcte! És ${t.f} ${esc(t.nm)} (${game.guesses.length}/6)</div>`:`<div class="fb ko">Era ${t.f} ${esc(t.nm)}</div>`)+`<button class="btn sec" id="gi">ℹ️ Fitxa de ${esc(t.nm)}</button>`:`${gameInput()}<div class="small">Intent ${game.guesses.length+1} de 6</div>`}
+  ${game.done?(game.won?`<div class="fb ok">🎉 Correcte! És ${t.f} ${esc(t.nm)} (${game.guesses.length}/6)</div>`:`<div class="fb ko">Era ${t.f} ${esc(t.nm)}</div>`)+`<div class="row"><button class="btn sec" id="gi">ℹ️ Fitxa de ${esc(t.nm)}</button>${game.daily||game.rep?`<button class="btn" id="srep">🔁 Repetir el d'avui</button>`:`<button class="btn" id="srep2">🎲 Un altre</button>`}</div>`:`${gameInput()}<div class="small">Intent ${game.guesses.length+1} de 6</div>`}
   <div style="display:grid;gap:5px">${game.guesses.map(g=>`<div class="guess" style="background:${g.id===game.target?"#a8e0bd":"#e8eef4"}"><span>${byId[g.id].f} ${esc(byId[g.id].nm)}</span><span>${g.id===game.target?"":nf(g.d,0)+" km "+g.p+"%"}</span><span style="font-size:20px">${g.dir}</span></div>`).join("")}</div>
   <p class="small">La fletxa indica cap a on està el país secret des del país que has dit. El % mostra com de prop estàs.</p>`;
   const f=featBy[game.target];const pj=d3.geoAzimuthalEqualArea().rotate([-d3.geoCentroid(f)[0],-d3.geoCentroid(f)[1]]).fitExtent([[15,15],[285,205]],f);
   d3.select("#silsvg").append("path").attr("d",d3.geoPath(pj)(f));
+  {const r=$("#srep");if(r)r.onclick=()=>startSil(true,true);const r2=$("#srep2");if(r2)r2.onclick=()=>startSil(false);}
   $("#gb").onclick=renderGamesMenu;
   if(!game.done)bindGameInput(silGuess);else $("#gi").onclick=()=>{const id=game.target;setTab("explore",true);selected=id;recolor();renderCountry(id,true);};
 }
@@ -1987,9 +1989,9 @@ function rngOf(seed){let a=seed>>>0;return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math
 function nbDist(src){const d={[src]:0};const q=[src];while(q.length){const x=q.shift();for(const y of byId[x].nb){if(byId[y]&&d[y]==null){d[y]=d[x]+1;q.push(y);}}}return d;}
 const TPOOL=()=>COUNTRIES.filter(c=>c.nb.length&&featBy[c.id]&&c.pop>=0.5).sort((a,b)=>a.id.localeCompare(b.id));
 function travlePair(rng){const P=TPOOL();for(let t=0;t<800;t++){const a=P[Math.floor(rng()*P.length)];const d=nbDist(a.id);const cs=Object.keys(d).filter(k=>d[k]>=3&&d[k]<=6&&featBy[k]&&byId[k].pop>=0.5).sort();if(cs.length)return [a.id,cs[Math.floor(rng()*cs.length)]];}return ["FRA","POL"];}
-function startTravle(daily){const t=today();const [a,b]=travlePair(daily?rngOf(hashStr(t+"travle")):Math.random);const dA_=nbDist(a),dB_=nbDist(b);const D=dA_[b];
-  game={kind:"travle",daily,a,b,D,dA:dA_,dB:dB_,guesses:[],cols:{},done:false,won:false,max:D-1+4,hints:0};
-  if(daily){const s=store.get("mapa_daily_travle",{});if(s.date===t&&s.a===a){game.guesses=s.guesses||[];game.done=!!s.done;game.won=!!s.won;game.hints=s.hints||0;}}
+function startTravle(daily,rep){const t=today();const [a,b]=travlePair(daily?rngOf(hashStr(t+"travle")):Math.random);const dA_=nbDist(a),dB_=nbDist(b);const D=dA_[b];
+  game={kind:"travle",daily:daily&&!rep,rep:!!rep,a,b,D,dA:dA_,dB:dB_,guesses:[],cols:{},done:false,won:false,max:D-1+4,hints:0};
+  if(daily&&!rep){const s=store.get("mapa_daily_travle",{});if(s.date===t&&s.a===a){game.guesses=s.guesses||[];game.done=!!s.done;game.won=!!s.won;game.hints=s.hints||0;}}
   travleCols();recolor();
   if(isGlobe())zoomToCountry(a);else{const b2=path.bounds({type:"FeatureCollection",features:[featBy[a],featBy[b]]});zoomToBounds(b2,7);}
   renderTravle();}
@@ -2004,15 +2006,15 @@ function travleGuess(id){const g=game;if(g.done)return;if(id===g.a||id===g.b){to
   else if(g.guesses.length>=g.max){g.done=true;g.won=false;}
   travleSave();travleCols();recolor();renderTravle();}
 function renderTravle(){const g=game;const A=byId[g.a],B=byId[g.b];const left=g.max-g.guesses.length;const st=streakInfo("travle");
-  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🛣️ Viatge ${g.daily?"del dia":"(pràctica)"}</h2>
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="gb">← Jocs</button></div><h2>🛣️ Viatge ${g.daily?"del dia":g.rep?"del dia (repetició)":"(pràctica)"}</h2>
   <div class="card big" style="text-align:center">${A.f} <b>${esc(A.nm)}</b> &nbsp;➜&nbsp; ${B.f} <b>${esc(B.nm)}</b></div>
   <p class="hint">Digues els països per on passaries per terra per a anar d'un a l'altre. El camí més curt passa per <b>${g.D-1}</b> ${g.D-1===1?"país":"països"}. 🟩 és en un camí curt · 🟧 hi és a prop · 🟥 lluny.</p>
-  ${g.done?(g.won?`<div class="fb ok">🎉 Has arribat! ${g.guesses.length} països (el mínim era ${g.D-1})${g.daily?" · 🔥 Ratxa: "+st.cur:""}</div>`:`<div class="fb ko">😕 S'han acabat els intents. Un camí curt era: ${travlePath().map(x=>byId[x].nm).join(" → ")}</div>`)+`<button class="btn sec" id="gp">🔁 Un altre viatge</button>`:gameInput()+`<div class="small">Et queden <b>${left}</b> intents${g.hints?` · ${g.hints} pistes usades`:""}</div>`}
+  ${g.done?(g.won?`<div class="fb ok">🎉 Has arribat! ${g.guesses.length} països (el mínim era ${g.D-1})${g.daily?" · 🔥 Ratxa: "+st.cur:""}</div>`:`<div class="fb ko">😕 S'han acabat els intents. Un camí curt era: ${travlePath().map(x=>byId[x].nm).join(" → ")}</div>`)+`<div class="row">${g.daily||g.rep?`<button class="btn" id="trep">🔁 Repetir el d'avui</button>`:""}<button class="btn sec" id="gp">🎲 Un altre viatge</button></div>`:gameInput()+`<div class="small">Et queden <b>${left}</b> intents${g.hints?` · ${g.hints} pistes usades`:""}</div>`}
   <div style="display:grid;gap:5px">${g.guesses.map(id=>{const t=travleTone(id);return `<div class="guess" style="background:${{g:"#a8e0bd",o:"#fbe0b0",r:"#f4c7c3"}[t]}"><span>${byId[id].f} ${esc(byId[id].nm)}</span><span>${{g:"🟩",o:"🟧",r:"🟥"}[t]}</span><span></span></div>`;}).join("")}</div>
   ${g.done?"":`<button class="btn sec small" id="ghint">💡 Pista</button>`}`;
   $("#gb").onclick=renderGamesMenu;
   if(!g.done){bindGameInput(travleGuess);$("#ghint").onclick=()=>{const p=travlePath().filter(x=>!g.guesses.includes(x));if(!p.length)return;g.hints++;travleSave();const c=byId[p[0]];toast(`Pista: un dels països comença per «${c.nm[0]}» i és ${dA(c.co)}`);renderTravle();};}
-  else $("#gp").onclick=()=>startTravle(false);}
+  else{$("#gp").onclick=()=>startTravle(false);const r=$("#trep");if(r)r.onclick=()=>startTravle(true,true);}}
 
 // ---------- joc: més o menys ----------
 const HLCATS={
