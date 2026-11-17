@@ -240,7 +240,7 @@ h3{margin:4px 0 0;font-size:16px}
       <div class="mapbar" id="esbar2"></div>
       <div id="fillov"></div>
       <button id="sph" title="Canviar la mida del panell">⇕ Panell</button>
-      <div id="lwpop"><b>📏 Gruix de les línies</b><div class="small" style="margin:4px 0">Fronteres, províncies, comarques i pobles</div><input type="range" id="lwr" min="0.4" max="4" step="0.1"><div class="row small"><span>Fina</span><b id="lwv"></b><span>Gruixuda</span></div><button class="btn sec small" id="lwreset" style="margin-top:6px;width:100%">Valor normal</button></div>
+      <div id="lwpop"><b>📏 Gruix de les línies</b><div class="small" style="margin:4px 0">Fronteres, províncies, comarques i pobles</div><input type="range" id="lwr" min="0.4" max="4" step="0.1"><div class="row small"><span>Fina</span><b id="lwv"></b><span>Gruixuda</span></div><div class="small" style="margin:8px 0 2px"><b>🏘️ Línies entre pobles</b> (Espanya)</div><input type="range" id="lwmr" min="0.5" max="8" step="0.25"><div class="row small"><span>Fina</span><b id="lwmv"></b><span>Gruixuda</span></div><button class="btn sec small" id="lwreset" style="margin-top:6px;width:100%">Valor normal</button></div>
       <div id="legend"></div>
       <div id="coordbox"></div>
       <div class="conts" id="conts"></div>
@@ -409,7 +409,7 @@ $("#darkbtn").onclick=()=>{document.body.classList.toggle("dark");store.set("map
 const svg=d3.select("#map"), wrap=$("#mapwrap");
 let W=wrap.clientWidth,H=wrap.clientHeight;
 let proj=null;const path=d3.geoPath();
-let LW=+store.get("mapa_lw",1)||1;
+let LW=+store.get("mapa_lw",1)||1;let LWM=+store.get("mapa_lwm",1)||1;
 const feats=topojson.feature(TOPO,TOPO.objects.countries).features;
 const featsLo=topojson.feature(TOPO_LO,TOPO_LO.objects.countries).features;
 const lo=feats.map(f=>featsLo.find(g=>g.properties.o===f.properties.o)||null);
@@ -780,7 +780,7 @@ function esDrawLabels(){
 }
 function esScale(){
   if(!esReady)return;const k=esK;
-  esCcaaP.style("stroke-width",.6*LW/k+"px");esProvP.style("stroke-width",.6*LW/k+"px");esComP.style("stroke-width",(esLevel==="mun"?1.4:.6)*LW/k+"px");esMunP.style("stroke-width",.25*LW/k+"px");
+  esCcaaP.style("stroke-width",.6*LW/k+"px");esProvP.style("stroke-width",.6*LW/k+"px");esComP.style("stroke-width",(esLevel==="mun"?1.4:.6)*LW/k+"px");esMunP.style("stroke-width",.25*LW*LWM/k+"px");
   esBorder.style("stroke-width",1.6*LW/k+"px");esInset.style("stroke-width",1/k+"px");
   esRivP.style("stroke-width",d=>(quiz&&quiz.hl&&quiz.hl.L==="esriv"&&quiz.hl.id===d.id?4:1.4)/k+"px").style("stroke",d=>quiz&&quiz.hl&&quiz.hl.L==="esriv"&&quiz.hl.id===d.id?"#e2574c":null);
   esRivH.style("stroke-width",10/k+"px");
@@ -1787,10 +1787,10 @@ swapFlags(document.body);
  if(window.innerWidth<=820&&store.get("mapa_esbarmin",null)===null)esBarMin=true;}
 
 // ================= gruix de les línies =================
-{const pop=$("#lwpop"),r=$("#lwr"),v=$("#lwv");const show=()=>{r.value=LW;v.textContent="×"+(+LW).toFixed(1);};
- const apply=()=>{store.set("mapa_lw",LW);v.textContent="×"+(+LW).toFixed(1);if(scene==="world")applyScale();else esScale();};
+{const pop=$("#lwpop"),r=$("#lwr"),v=$("#lwv"),rm=$("#lwmr"),vm=$("#lwmv");const show=()=>{r.value=LW;rm.value=LWM;v.textContent="×"+(+LW).toFixed(1);vm.textContent="×"+(+LWM).toFixed(1);};
+ const apply=()=>{store.set("mapa_lw",LW);store.set("mapa_lwm",LWM);show();if(scene==="world")applyScale();else esScale();};
  $("#zlw").onclick=e=>{e.stopPropagation();const on=pop.style.display!=="block";pop.style.display=on?"block":"none";if(on)show();};
- r.oninput=()=>{LW=+r.value;apply();};$("#lwreset").onclick=()=>{LW=1;r.value=1;apply();};
+ r.oninput=()=>{LW=+r.value;apply();};rm.oninput=()=>{LWM=+rm.value;apply();};$("#lwreset").onclick=()=>{LW=1;LWM=1;apply();};
  document.addEventListener("pointerdown",e=>{if(pop.style.display==="block"&&!pop.contains(e.target)&&e.target.id!=="zlw")pop.style.display="none";});}
 
 // ================= init =================
