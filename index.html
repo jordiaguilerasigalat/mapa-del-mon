@@ -951,7 +951,7 @@ function setTab(t,silent){
   else if(t==="games"){selected=null;recolor();renderGamesMenu();}
   else if(t==="places"){selected?renderPlace(selected):renderStats();}
   else if(t==="spain"){renderEsWelcome();}
-  if(t!=="explore"&&typeof tz!=="undefined"&&tz.view){tzStop();tz.view=false;tzDraw();}
+  if(t!=="explore"&&typeof tz!=="undefined"&&tz.view){tzStop();tzRestoreView();tz.view=false;tzDraw();}
   checkStatic();if(t!=="games")d3.selectAll(".flightln").remove();
 }
 const side=$("#side");
@@ -2242,7 +2242,7 @@ const hhmm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2
 function sunPos(d){const n=(d.getTime()-Date.UTC(2000,0,1,12))/864e5;const rad=Math.PI/180;const L=(280.46+.9856474*n)%360,g=(357.528+.9856003*n)%360*rad;const lam=(L+1.915*Math.sin(g)+.02*Math.sin(2*g))*rad,eps=(23.439-4e-7*n)*rad;
   const dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/rad;const gmst=((18.697374558+24.06570982441908*n)%24+24)%24;let lon=ra-gmst*15;lon=((lon+540)%360)-180;return [lon,dec/rad];}
 const sunAlt=(ll,sp)=>90-d3.geoDistance(ll,sp)*180/Math.PI;
-let tz={view:false,sel:"ESP",date:"today",min:null,color:true,play:null,utc:new Date()};
+let tz={view:false,sel:"ESP",date:"today",min:null,color:true,play:null,utc:new Date(),mode:"manual",speed:20,globe:true,raf:null,prevView:null};
 const gNight=root.insert("g",()=>gPhys.node()).attr("class","night").style("pointer-events","none");
 function tzDay(){const now=new Date();const y=now.getUTCFullYear();return tz.date==="today"?[y,now.getMonth(),now.getDate()]:tz.date==="mar"?[y,2,20]:tz.date==="jun"?[y,5,21]:[y,11,21];}
 function tzCompute(){const z=tzZone(tz.sel);if(tz.min==null){const now=new Date();tz.min=Math.round((now.getUTCHours()*60+now.getUTCMinutes()+tzOffset(z,now))/15)*15%1440;}
@@ -2255,6 +2255,7 @@ function tzDraw(){const on=scene==="world"&&(tz.view||layersOn.night);gNight.sty
   gNight.selectAll("text").data(vis?[p]:[]).join("text").attr("x",d=>d[0]).attr("y",d=>d[1]).attr("text-anchor","middle").attr("dominant-baseline","middle").attr("font-size",26/k).text("☀️");}
 function tzFill(id){if(!(tz.view&&tz.color&&tab==="explore"&&scene==="world"))return null;const o=tzOffset(tzZone(id),tz.utc)/60;return d3.interpolateRgb(d3.interpolateRainbow(((o+12)/26)*.88+.02),"#ffffff")(.3);}
 const TZCITIES=[["Madrid","ESP",[-3.7,40.4]],["Londres","GBR",[-0.13,51.5]],["Nova York","USA",[-74,40.7]],["Los Angeles","USA",[-118.2,34.05],"America/Los_Angeles"],["Rio de Janeiro","BRA",[-43.2,-22.9]],["Moscou","RUS",[37.6,55.75]],["Dubai","ARE",[55.3,25.2]],["Delhi","IND",[77.2,28.6]],["Pequín","CHN",[116.4,39.9]],["Tòquio","JPN",[139.7,35.7]],["Sydney","AUS",[151.2,-33.9]],["Auckland","NZL",[174.8,-36.8]]];
+function tzCitiesHtml(){return TZCITIES.map(([n,id,ll,zz])=>{const o=tzOffset(zz||tzZone(id),tz.utc);const loc=(tz.utc.getUTCHours()*60+tz.utc.getUTCMinutes()+o);return `<div class="row" style="justify-content:space-between;padding:2px 0"><span>${byId[id].f} ${n}</span><span><b>${hhmm(loc)}</b> ${lightIc(ll)} <span class="small">${offTxt(o)}</span></span></div>`;}).join("");}
 function lightIc(ll){const a=sunAlt(ll,sunPos(tz.utc));return a>-0.83?(a<8?"🌅":"☀️"):a>-12?"🌆":"🌙";}
 function clockSvg(min){const h=(min/60)%12,m=min%60;const a=h*30+m*.5,b=m*6;const hand=(ang,len,w,c)=>`<line x1="50" y1="50" x2="${50+len*Math.sin(ang*Math.PI/180)}" y2="${50-len*Math.cos(ang*Math.PI/180)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
   return `<svg viewBox="0 0 100 100" width="96" height="96"><circle cx="50" cy="50" r="46" fill="var(--card)" stroke="var(--head,#173a5e)" stroke-width="4"/>${d3.range(12).map(i=>`<line x1="50" y1="8" x2="50" y2="${i%3?13:16}" stroke="#888" stroke-width="${i%3?1.5:3}" transform="rotate(${i*30} 50 50)"/>`).join("")}${hand(a,24,5,"#173a5e")}${hand(b,36,3,"#e2574c")}<circle cx="50" cy="50" r="3.5" fill="#173a5e"/></svg>`;}
@@ -2262,27 +2263,40 @@ function renderTZ(){tz.view=true;tzCompute();const c=byId[tz.sel];const z=tzZone
   const mine=tzOffset(tzZone("ESP"),tz.utc);const diff=(off-mine)/60;
   const offs=[...new Set(COUNTRIES.map(x=>tzOffset(tzZone(x.id),tz.utc)))].sort((a,b)=>a-b);
   side.innerHTML=`<div class="row"><button class="btn sec small" id="tzb">← Tornar</button></div><h2>🕐 Hores i llum del Sol</h2>
-  <p class="hint">Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com el dia i la nit es desplacen pel món.</p>
+  <div class="seg" id="tzm"><button data-v="manual" class="${tz.mode==="manual"?"on":""}">🕹️ Mou tu el rellotge</button><button data-v="auto" class="${tz.mode==="auto"?"on":""}">🎬 1 dia automàtic</button></div>
+  <p class="hint">${tz.mode==="auto"?"Prem ▶️ i mira com la llum del Sol recorre el planeta durant un dia sencer, de les 00:00 a les 24:00 de l'hora del país triat.":"Toca un país al mapa per a vore quina hora és allí. Mou el rellotge i mira com el dia i la nit es desplacen pel món."}</p>
   <div class="card"><div class="row" style="align-items:center;gap:12px">${clockSvg(tz.min)}<div><div class="big" style="font-size:22px">${c.f} ${esc(c.nm)}</div><div class="statbig" style="font-size:40px">${hhmm(tz.min)} ${capL}</div><div class="small">${offTxt(off)}${tz.sel!=="ESP"?` · ${diff===0?"la mateixa hora que a Espanya":(diff>0?diff+" h més que a Espanya":(-diff)+" h menys que a Espanya")}`:""}</div></div></div>
-  <input type="range" id="tzr" min="0" max="1425" step="15" value="${tz.min}" style="width:100%;margin-top:8px"><div class="row small" style="justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-  <div class="row"><button class="btn small" id="tzp">${tz.play?"⏸️ Parar":"▶️ Fer passar el dia"}</button><button class="btn sec small" id="tznow">🕐 Ara</button></div>
+  ${tz.mode==="auto"?`<div class="bar" style="margin-top:10px;height:12px"><div id="tzbar" style="width:${tz.min/1440*100}%;background:linear-gradient(90deg,#173a5e,#f0a830,#ffd166,#f0a830,#173a5e)"></div></div><div class="row small" style="justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+   <div class="row"><button class="btn" id="tzap" style="font-size:18px;flex:1">${tz.raf?"⏸️ Pausa":tz.min>=1439?"🔁 Tornar a començar":tz.min>0&&tz.autoStarted?"▶️ Continuar":"▶️ Començar el dia"}</button></div>
+   <div class="seg" id="tzs">${[[40,"🐢 Lent"],[20,"Normal"],[10,"🐇 Ràpid"]].map(([v,t])=>`<button data-v="${v}" class="${tz.speed===v?"on":""}">${t}</button>`).join("")}</div>
+   <label class="ck"><input type="checkbox" id="tzg" ${tz.globe?"checked":""}> 🌐 Vore-ho en el globus terraqüi</label>`:`<input type="range" id="tzr" min="0" max="1425" step="15" value="${tz.min}" style="width:100%;margin-top:8px"><div class="row small" style="justify-content:space-between"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+  <div class="row"><button class="btn small" id="tzp">${tz.play?"⏸️ Parar":"▶️ Fer passar el dia"}</button><button class="btn sec small" id="tznow">🕐 Ara</button></div>`}
   ${MULTITZ[tz.sel]?`<div class="small" style="margin-top:6px">ℹ️ ${MULTITZ[tz.sel]}</div>`:""}</div>
   <div><h3>📅 Dia de l'any</h3><div class="seg" id="tzd">${[["today","Hui"],["mar","20 de març (equinocci)"],["jun","21 de juny (solstici)"],["dec","21 de desembre (solstici)"]].map(([k,t])=>`<button data-v="${k}" class="${tz.date===k?"on":""}">${t}</button>`).join("")}</div>
   <div class="small">Ara el Sol cau perpendicular sobre la latitud <b>${nf(Math.abs(sp[1]),1)}° ${sp[1]>=0?"N":"S"}</b>. ${Math.abs(sp[1])>23?"És el dia de "+(sp[1]>0?"més":"menys")+" llum a l'hemisferi nord.":Math.abs(sp[1])<1.5?"El dia i la nit duren quasi igual a tot el món.":""}</div></div>
-  <div class="card"><h3 style="margin-top:0">🌍 Quina hora és a…</h3>${TZCITIES.map(([n,id,ll,zz])=>{const o=tzOffset(zz||tzZone(id),tz.utc);const loc=(tz.utc.getUTCHours()*60+tz.utc.getUTCMinutes()+o);return `<div class="row" style="justify-content:space-between;padding:2px 0"><span>${byId[id].f} ${n}</span><span><b>${hhmm(loc)}</b> ${lightIc(ll)} <span class="small">${offTxt(o)}</span></span></div>`;}).join("")}</div>
+  <div class="card"><h3 style="margin-top:0">🌍 Quina hora és a…</h3><div id="tzcities">${tzCitiesHtml()}</div></div>
   <label class="ck"><input type="checkbox" id="tzc" ${tz.color?"checked":""}> 🎨 Pintar els països segons la zona horària</label>
   ${tz.color?`<div class="tzleg">${offs.map(o=>`<span><i style="background:${d3.interpolateRgb(d3.interpolateRainbow(((o/60+12)/26)*.88+.02),"#fff")(.3)}"></i>${offTxt(o).replace("UTC","")}</span>`).join("")}</div>`:""}
   <div class="card small"><b>Per què hi ha zones horàries?</b> La Terra fa una volta sencera (360°) cada 24 hores, és a dir, gira <b>15° cada hora</b>. Per això, quan és migdia en un lloc, a 15° cap a l'est ja és la una, i a 15° cap a l'oest encara són les onze. Cada país tria la seua hora oficial, i per això les zones no són línies rectes. ☀️ marca on el Sol està just damunt del cap.</div>`;
-  $("#tzb").onclick=()=>{tzStop();tz.view=false;tzDraw();recolor();renderWelcome();};
-  $("#tzr").oninput=e=>{tz.min=+e.target.value;tzQuick();};$("#tzr").onchange=()=>renderTZ();
+  $("#tzb").onclick=()=>{tzStop();tzRestoreView();tz.view=false;tzDraw();recolor();renderWelcome();};
+  side.querySelectorAll("#tzm button").forEach(b=>b.onclick=()=>{tzStop();tz.mode=b.dataset.v;if(tz.mode==="auto"){tz.min=0;tz.autoStarted=false;if(tz.globe)tzToGlobe();}else tzRestoreView();renderTZ();});
+  if(tz.mode==="auto"){$("#tzap").onclick=()=>{if(tz.raf){tzStop();renderTZ();return;}if(tz.min>=1439)tz.min=0;tz.autoStarted=true;if(tz.globe)tzToGlobe();tzAuto();renderTZ();};
+    side.querySelectorAll("#tzs button").forEach(b=>b.onclick=()=>{tz.speed=+b.dataset.v;const r=!!tz.raf;tzStop();if(r)tzAuto();renderTZ();});
+    $("#tzg").onchange=e=>{tz.globe=e.target.checked;if(tz.globe)tzToGlobe();else tzRestoreView();renderTZ();};}
+  else{$("#tzr").oninput=e=>{tz.min=+e.target.value;tzQuick();};$("#tzr").onchange=()=>renderTZ();
   $("#tzp").onclick=()=>{if(tz.play)tzStop();else{tz.play=setInterval(()=>{tz.min=(tz.min+15)%1440;tzQuick(true);},90);}renderTZ();};
-  $("#tznow").onclick=()=>{tzStop();tz.date="today";tz.min=null;renderTZ();};
+  $("#tznow").onclick=()=>{tzStop();tz.date="today";tz.min=null;renderTZ();};}
   side.querySelectorAll("#tzd button").forEach(b=>b.onclick=()=>{tz.date=b.dataset.v;renderTZ();});
   $("#tzc").onchange=e=>{tz.color=e.target.checked;renderTZ();};
   tzDraw();recolor();}
 let tzT=0;function tzQuick(fromPlay){tzCompute();tzDraw();const n=Date.now();if(n-tzT>250){tzT=n;recolor();}const st=side.scrollTop;if(fromPlay){const r=$("#tzr");if(r)r.value=tz.min;}
-  const c=side.querySelector(".statbig");if(c)c.innerHTML=`${hhmm(tz.min)} ${lightIc(byId[tz.sel].capC)}`;const sv=side.querySelector(".card svg");if(sv)sv.outerHTML=clockSvg(tz.min);side.scrollTop=st;}
-function tzStop(){if(tz.play){clearInterval(tz.play);tz.play=null;}}
+  const c=side.querySelector(".statbig");if(c)c.innerHTML=`${hhmm(tz.min)} ${lightIc(byId[tz.sel].capC)}`;const sv=side.querySelector(".card svg");if(sv)sv.outerHTML=clockSvg(tz.min);const tc=$("#tzcities");if(tc&&n-(tz.lc||0)>200){tz.lc=n;tc.innerHTML=tzCitiesHtml();}side.scrollTop=st;}
+function tzStop(){if(tz.play){clearInterval(tz.play);tz.play=null;}if(tz.raf){cancelAnimationFrame(tz.raf);tz.raf=null;}}
+function tzToGlobe(){if(view!=="globe"){tz.prevView=view;setView("globe");}const c=byId[tz.sel];setTimeout(()=>{try{globeGoto(c.capC,1.15);}catch(e){}},60);}
+function tzRestoreView(){if(tz.prevView&&view==="globe"){setView(tz.prevView);}tz.prevView=null;}
+function tzAuto(){const D=tz.speed*1000;let t0=performance.now()-tz.min/1440*D;
+  const step=now=>{if(!tz.view){tz.raf=null;return;}let m=(now-t0)/D*1440;if(m>=1439){m=1439;}tz.min=Math.floor(m);tzQuick();const b=$("#tzbar");if(b)b.style.width=(tz.min/1440*100)+"%";
+    if(m>=1439){tz.raf=null;recolor();renderTZ();return;}tz.raf=requestAnimationFrame(step);};tz.raf=requestAnimationFrame(step);}
 
 window.__dbg={tz,renderTZ,tzOffset,sunPos,flagDistract,VOX,flagCols,flagSim,flagPool,relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};
 
