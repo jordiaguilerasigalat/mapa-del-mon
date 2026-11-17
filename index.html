@@ -923,12 +923,19 @@ const side=$("#side");
 function renderWelcome(){
   side.innerHTML=`<h2>Benvingut al mapa del món!</h2>
   <p class="hint big">👆 Toca qualsevol país per a vore'n la capital i les coses més importants.</p>
-  <p class="hint">• Fes zoom amb la roda del ratolí o pessigant. Quan t'apropes apareixen les capitals (⭐) i les ciutats.<br>• Dalt a l'esquerra tries la vista (pla, Mercator o globus) i les capes: <b>relleu i aigües</b> (rius, llacs, muntanyes, deserts, mars), <b>latituds</b> (equador, tròpics, coordenades) i <b>llengües</b>.<br>• La pestanya <b>🇪🇸 Espanya</b> té comunitats, províncies, comarques i pobles.</p>
+  <p class="hint">• Fes zoom amb la roda del ratolí o pessigant. Quan t'apropes apareixen més noms.<br>• Dalt a l'esquerra tries la vista (pla, Mercator o globus) i què vols vore: <b>🏷️ noms dels països</b>, <b>⭐ capitals</b>, <b>🏙️ altres ciutats importants</b>, <b>relleu i aigües</b> (rius, llacs, muntanyes, deserts, mars), <b>latituds</b> (equador, tròpics, coordenades) i <b>llengües</b>.<br>• Amb el botó <b>📏</b> (a la dreta del mapa) canvies el gruix de les línies.<br>• La pestanya <b>🇪🇸 Espanya</b> té comunitats, províncies, comarques i pobles de tota Espanya.</p>
   ${layersOn.lang?renderWorldLangs():`<div class="card"><h3>Continents</h3><div class="legendrow" style="margin-top:8px">${CONT_ORDER.map(c=>`<span><i style="background:${CONT[c]}"></i>${c}</span>`).join("")}</div></div>`}
   <div class="row"><button class="btn" id="rnd">🎲 País a l'atzar</button><button class="btn sec" id="goquiz">📝 Fer un test</button><button class="btn sec" id="gogames">🎮 Jocs del dia</button></div>
+  <div class="card"><h3>💾 Les teues dades</h3><p class="small">Els resultats, estadístiques i llocs es guarden en este navegador. Per a passar-los a un altre ordinador o mòbil, guarda una còpia ací i obri-la en l'altre.</p><div class="row"><button class="btn sec small" id="bkexp">⬇️ Guardar còpia</button><button class="btn sec small" id="bkimp">⬆️ Carregar còpia</button><input type="file" id="bkfile" accept=".json,application/json" style="display:none"></div></div>
   <p class="small">${COUNTRIES.length} països · ${cityData.length} ciutats · ${PHYS.meta.length} llocs naturals · ${Object.keys(SPAIN.mun).length} pobles</p>`;
   $("#rnd").onclick=()=>{const c=pick(COUNTRIES);selected=c.id;recolor();renderCountry(c.id);zoomToCountry(c.id);};
   $("#goquiz").onclick=()=>setTab("quiz");$("#gogames").onclick=()=>setTab("games");
+  $("#bkexp").onclick=()=>{try{const o={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^mapa/.test(k))o[k]=localStorage.getItem(k);}
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({app:"mapa-del-mon",v:1,d:new Date().toISOString(),data:o})],{type:"application/json"}));a.download="mapa-del-mon-dades-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();toast("Còpia guardada");}catch(e){toast("No s'ha pogut guardar la còpia");}};
+  $("#bkimp").onclick=()=>$("#bkfile").click();
+  $("#bkfile").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const j=JSON.parse(t);if(!j||j.app!=="mapa-del-mon"||!j.data)throw 0;
+    if(!confirm("Vols substituir les dades d'este navegador per les de la còpia?"))return;
+    Object.keys(localStorage).filter(k=>/^mapa/.test(k)).forEach(k=>localStorage.removeItem(k));Object.entries(j.data).forEach(([k,v])=>localStorage.setItem(k,v));location.reload();}).catch(()=>toast("Eixe fitxer no és una còpia del mapa"));};
   side.querySelectorAll("[data-wl]").forEach(b=>b.onclick=()=>{const n=b.dataset.wl;langHL=langHL&&langHL._n===n?null:Object.assign(countriesWithLang(n),{_n:n});recolor();side.querySelectorAll("[data-wl]").forEach(x=>x.classList.toggle("on",langHL&&x.dataset.wl===langHL._n));if(langHL)toast(`${n}: es parla a ${langHL.length} països (en roig)`);});
 }
 function renderWorldLangs(){const mx=WLANGS[0][1];return `<div class="card"><h3>🗣️ Llengües més parlades del món</h3><p class="small">Parlants totals (nadius + segona llengua), en milions. Dades aproximades d'Ethnologue 2025. Toca'n una per a vore on es parla.</p>
