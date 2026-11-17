@@ -899,7 +899,16 @@ $("#esbar").onclick=e=>{const b=e.target.closest("button");if(!b)return;setEsLev
 $("#esbar2").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.tg){if(quiz&&quiz.running)quizBarOpen=!quizBarOpen;else{esBarMin=!esBarMin;store.set("mapa_esbarmin",esBarMin);}renderEsBar();return;}if(b.dataset.fk){toggleFocus(b.dataset.fk);return;}esLayers[b.dataset.el]=!esLayers[b.dataset.el];store.set("mapa_escapes",esLayers);esRoot.classed("nonames",!!esLayers.non).classed("nosym",!!esLayers.nosym);renderEsBar();esDrawLabels();esColor();relSchedule();};
 function toggleFocus(k){const add=!focusSel.includes(k);focusSel=add?focusSel.concat([k]):focusSel.filter(x=>x!==k);store.set("mapa_focus",focusSel);if(add&&!(quiz&&quiz.running)){if(esLevel!=="mun")setEsLevel("mun");setTimeout(()=>esZoomTo("focussel"),30);}renderEsBar();esColor();if(tab==="spain"&&!(quiz&&quiz.running))renderFocus();}
 function setFocusOnly(ks){focusSel=ks.slice();store.set("mapa_focus",focusSel);renderEsBar();esColor();}
-function setEsLevel(l){esLevel=l;store.set("mapa_esnivell",l);renderEsBar();esDrawLabels();esColor();}
+const ES_ORD={ccaa:0,prov:1,com:2,mun:3};
+function esParent(L,id,to){try{if(L===to)return id;
+  if(L==="mun"){const m=SPAIN.mun[id];if(to==="com")return m.com;const p=id.slice(0,2);if(to==="prov")return p;if(to==="ccaa")return SPAIN.prov[p].cc;}
+  if(L==="com"){const c=SPAIN.com[id];if(to==="ccaa")return c.cc;if(to==="prov"){const ms=comMuns[id]||[];return ms.length?ms[0].slice(0,2):null;}}
+  if(L==="prov"&&to==="ccaa")return SPAIN.prov[id].cc;}catch(e){}return null;}
+function setEsLevel(l){const prev=esLevel;esLevel=l;store.set("mapa_esnivell",l);renderEsBar();esDrawLabels();esColor();
+  if(quiz&&quiz.running)return;if(!(l in ES_ORD)||!(prev in ES_ORD)||ES_ORD[l]>=ES_ORD[prev])return;
+  const sel=esSel&&(esSel.L in ES_ORD)?esSel:null;const pid=sel?esParent(sel.L,sel.id,l):null;
+  if(pid){esSel={L:l,id:pid};esColor();if(tab==="spain")renderEs(l,pid);esZoomTo(l,pid);}
+  else{const b=pathES.bounds({type:"FeatureCollection",features:esCcaa});esZoomBox(b,1);}}
 function setScene(s){
   if(scene===s)return;
   zt[scene]=d3.zoomTransform(svg.node());svg.interrupt();
