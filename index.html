@@ -231,6 +231,7 @@ body.bar-v #esbar2 .bardet{padding:4px 6px 0!important}
 .tripbook>div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--cardline)}
 .tzleg{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:11px}.tzleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:3px;vertical-align:-2px}
 .card .btn.small:not(.sec){color:#fff}
+.nonames text{display:none}
 #printarea{display:none}
 .opts.flagopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.opts.flagopts .opt{padding:10px;display:flex;justify-content:center;align-items:center;min-height:86px}.opts.flagopts .opt .flg{height:62px;width:auto;max-width:100%}
 .hintline{background:#fff6d6;border:1px solid #f0d27a;border-radius:10px;padding:7px 10px;margin:4px 0;font-weight:700;color:#5a4500}body.dark .hintline{background:#3a3218;color:#ffe9a6;border-color:#6b5a26}
@@ -892,10 +893,10 @@ function renderEsBar(){
   $("#esbar").innerHTML=[["ccaa","Comunitats"],["prov","Províncies"],["com","Comarques"],["mun","Pobles"]].map(([k,t])=>`<button data-lv="${k}" class="${esLevel===k?"on":""}">${t}</button>`).join("");
   const qOn=!!((quiz&&quiz.running)||(game&&game.kind==="fill"));$("#esbar").style.visibility=qOn?"hidden":"";$("#esbar2").style.top=qOn?"10px":"";
   if(barCollapsed()){$("#esbar2").innerHTML=`<button data-tg="1" class="on" title="Mostra les capes">🗂️ Capes${focusSel.length?" · "+focusSel.map(k=>FSHORT[k]).join(", "):""} ▾</button>`;return;}
-  $("#esbar2").innerHTML=[["riv","〰️ Rius"],["mt","⛰️ Muntanyes"],["rel","🗻 Ombres"],["rt","🥾 Rutes"],["mn","🏷️ Pobles"]].map(([k,t])=>`<button data-el="${k}" class="${esLayers[k]?"on":""}">${t}</button>`).join("")+`<span class="small bardet" style="align-self:center;padding:0 4px">Detall:</span>`+FKS.map(k=>[k,FSHORT[k]]).map(([k,t])=>`<button data-fk="${k}" class="${focusSel.includes(k)?"on":""}">${t}</button>`).join("")+barTools()+`<button data-tg="1" class="bartool" title="Amaga aquesta barra">▴ Amagar</button>`;
+  $("#esbar2").innerHTML=[["riv","〰️ Rius"],["mt","⛰️ Muntanyes"],["rel","🗻 Ombres"],["rt","🥾 Rutes"],["mn","🏷️ Pobles"],["non","🚫 Amagar tots els noms"]].map(([k,t])=>`<button data-el="${k}" class="${esLayers[k]?"on":""}">${t}</button>`).join("")+`<span class="small bardet" style="align-self:center;padding:0 4px">Detall:</span>`+FKS.map(k=>[k,FSHORT[k]]).map(([k,t])=>`<button data-fk="${k}" class="${focusSel.includes(k)?"on":""}">${t}</button>`).join("")+barTools()+`<button data-tg="1" class="bartool" title="Amaga aquesta barra">▴ Amagar</button>`;
 }
 $("#esbar").onclick=e=>{const b=e.target.closest("button");if(!b)return;setEsLevel(b.dataset.lv);};
-$("#esbar2").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.tg){if(quiz&&quiz.running)quizBarOpen=!quizBarOpen;else{esBarMin=!esBarMin;store.set("mapa_esbarmin",esBarMin);}renderEsBar();return;}if(b.dataset.fk){toggleFocus(b.dataset.fk);return;}esLayers[b.dataset.el]=!esLayers[b.dataset.el];store.set("mapa_escapes",esLayers);renderEsBar();esDrawLabels();esColor();relSchedule();};
+$("#esbar2").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.tg){if(quiz&&quiz.running)quizBarOpen=!quizBarOpen;else{esBarMin=!esBarMin;store.set("mapa_esbarmin",esBarMin);}renderEsBar();return;}if(b.dataset.fk){toggleFocus(b.dataset.fk);return;}esLayers[b.dataset.el]=!esLayers[b.dataset.el];store.set("mapa_escapes",esLayers);esRoot.classed("nonames",!!esLayers.non);renderEsBar();esDrawLabels();esColor();relSchedule();};
 function toggleFocus(k){const add=!focusSel.includes(k);focusSel=add?focusSel.concat([k]):focusSel.filter(x=>x!==k);store.set("mapa_focus",focusSel);if(add&&!(quiz&&quiz.running)){if(esLevel!=="mun")setEsLevel("mun");setTimeout(()=>esZoomTo("focussel"),30);}renderEsBar();esColor();if(tab==="spain"&&!(quiz&&quiz.running))renderFocus();}
 function setFocusOnly(ks){focusSel=ks.slice();store.set("mapa_focus",focusSel);renderEsBar();esColor();}
 function setEsLevel(l){esLevel=l;store.set("mapa_esnivell",l);renderEsBar();esDrawLabels();esColor();}
@@ -2318,6 +2319,8 @@ function tzAuto(loop){tz.loop=!!loop;const D=tz.speed*1000;let t0=performance.no
     if(!loop&&m>=1439){tz.raf=null;recolor();renderTZ();return;}tz.raf=requestAnimationFrame(step);};tz.raf=requestAnimationFrame(step);}
 
 window.__dbg={tz,renderTZ,tzOffset,sunPos,flagDistract,VOX,flagCols,flagSim,flagPool,relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};
+
+esRoot.classed("nonames",!!esLayers.non);
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
