@@ -625,7 +625,7 @@ $("#views").onclick=e=>{const b=e.target.closest("button");if(b)setView(b.datase
 let barV=store.get("mapa_barv",false),layMin=store.get("mapa_laymin",false);document.body.classList.toggle("bar-v",barV);
 const barTools=()=>`<button data-bo="1" class="bartool" title="${barV?"Posar en horitzontal":"Posar en vertical"}">${barV?"↔️ Horitzontal":"↕️ Vertical"}</button>`;
 function setBarV(v){barV=v;store.set("mapa_barv",v);document.body.classList.toggle("bar-v",v);renderLayersBar();if(typeof esReady!=="undefined"&&esReady)renderEsBar();}
-function renderLayersBar(){if(layMin){$("#layers").innerHTML=`<button data-lm="1" class="on" title="Mostra les capes">🗂️ Capes ▾</button>`;return;}$("#layers").innerHTML=[["cn","🏷️ Països"],["cap","⭐ Capitals"],["city","🏙️ Ciutats"],["phys","🏔️ Relleu i aigües"],["rel","🗻 Ombres"],["night","🌗 Dia i nit"],["sub","🧩 Països dins de països"],["coord","🧭 Latituds"],["lang","🗣️ Llengües"]].map(([k,t])=>`<button data-l="${k}" class="${layersOn[k]?"on":""}">${t}</button>`).join("")+barTools()+`<button data-lm="1" class="bartool" title="Amaga les capes">▴ Amagar</button>`;}
+function renderLayersBar(){if(layMin){$("#layers").innerHTML=`<button data-lm="1" class="on" title="Mostra les capes">🗂️ Capes ▾</button>`;return;}$("#layers").innerHTML=[["cn","🏷️ Països"],["cap","⭐ Capitals"],["city","🏙️ Ciutats"],["phys","🏔️ Relleu i aigües"],["rel","🗻 Ombres"],["night","🌗 Dia i nit"],["sub","🧩 Països constituents"],["coord","🧭 Latituds"],["lang","🗣️ Llengües"]].map(([k,t])=>`<button data-l="${k}" class="${layersOn[k]?"on":""}">${t}</button>`).join("")+barTools()+`<button data-lm="1" class="bartool" title="Amaga les capes">▴ Amagar</button>`;}
 $("#layers").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bo){setBarV(!barV);return;}if(b.dataset.lm){layMin=!layMin;store.set("mapa_laymin",layMin);renderLayersBar();return;}const k=b.dataset.l;layersOn[k]=!layersOn[k];store.set("mapa_capes",layersOn);renderLayersBar();redraw();recolor();renderLegend();
   if(k==="lang"&&layersOn.lang&&tab==="explore"&&!selected)renderWelcome();if(k==="phys"&&layersOn.phys)toast("Toca un riu, llac, muntanya o nom per a vore'n la fitxa");if(k==="coord")$("#coordbox").style.display=layersOn.coord?"block":"none";};
 
@@ -2357,11 +2357,11 @@ function renderSub(id,zoom){const u=SUBU[id];const P=byId[u.par];subSel=id;if(!l
   if(tab!=="explore")setTab("explore",true);
   const sibs=SUB.units.filter(x=>x.par===u.par);
   side.innerHTML=`<div class="row"><div class="flag">${subFlag(u,1)}</div><button class="closex" id="close" title="Tancar">×</button></div>
-  <h2>${esc(u.nm)}</h2><div class="row"><span class="chip">🧩 Forma part del ${esc(SUBPAR[u.par])}</span></div>
+  <h2>${esc(u.nm)}</h2><div class="row"><span class="chip">🧩 País constituent del ${esc(SUBPAR[u.par])}</span></div>
   <div class="card big">🏛️ Capital: <b>${esc(u.cap)}</b></div>
   <div class="card"><div class="row" style="justify-content:space-between"><span class="small">👥 Població</span><b>uns ${fmtPop(u.pop)}</b></div><div class="row" style="justify-content:space-between"><span class="small">🗣️ Llengües</span><b>${esc(u.lg)}</b></div></div>
   <p>${esc(u.note)}</p>
-  <h3>El ${esc(SUBPAR[u.par])} està format per:</h3><div class="row">${sibs.map(x=>`<button class="btn ${x.id===id?"":"sec"} small" data-su="${x.id}">${subFlag(x)} ${esc(x.nm)}</button>`).join("")}</div>
+  <h3>Països constituents del ${esc(SUBPAR[u.par])}</h3><p class="small">Un <b>país constituent</b> és un país que forma part d'un estat més gran (és a dir, un país dins d'un altre país). Té nom, capital i, sovint, govern propi, però no és un estat independent.</p><div class="row">${sibs.map(x=>`<button class="btn ${x.id===id?"":"sec"} small" data-su="${x.id}">${subFlag(x)} ${esc(x.nm)}</button>`).join("")}</div>
   <button class="btn sec" id="supar">${P.f} Fitxa del ${esc(SUBPAR[u.par])}</button>`;
   $("#close").onclick=()=>{subSel=null;subDraw();renderWelcome();};
   side.querySelectorAll("[data-su]").forEach(b=>b.onclick=()=>renderSub(b.dataset.su,true));
@@ -2369,7 +2369,7 @@ function renderSub(id,zoom){const u=SUBU[id];const P=byId[u.par];subSel=id;if(!l
   subDraw();
   if(zoom){const f=SUBF.find(x=>x.id===id);if(f){if(isGlobe()){const ar=d3.geoArea(bigPart(f));globeGoto(d3.geoCentroid(bigPart(f)),ar<1e-5?18:ar<1e-3?6:2.5);}else zoomToBounds(path.bounds(bigPart(f)),12);}}}
 const _renderCountry=renderCountry;
-renderCountry=function(id,...a){_renderCountry(id,...a);if(SUBPAR[id]){const h=side.querySelector("h2");if(h)h.insertAdjacentHTML("afterend",`<div class="card" style="padding:8px"><b>🧩 El ${esc(SUBPAR[id])} està format per:</b><div class="row" style="margin-top:6px">${SUB.units.filter(x=>x.par===id).map(x=>`<button class="btn sec small" data-su="${x.id}">${subFlag(x)} ${esc(x.nm)}</button>`).join("")}</div></div>`);side.querySelectorAll("[data-su]").forEach(b=>b.onclick=()=>renderSub(b.dataset.su,true));}};
+renderCountry=function(id,...a){_renderCountry(id,...a);if(SUBPAR[id]){const h=side.querySelector("h2");if(h)h.insertAdjacentHTML("afterend",`<div class="card" style="padding:8px"><b>🧩 Països constituents</b> <span class="small">(països dins d'un altre país)</span><div class="row" style="margin-top:6px">${SUB.units.filter(x=>x.par===id).map(x=>`<button class="btn sec small" data-su="${x.id}">${subFlag(x)} ${esc(x.nm)}</button>`).join("")}</div></div>`);side.querySelectorAll("[data-su]").forEach(b=>b.onclick=()=>renderSub(b.dataset.su,true));}};
 
 setTimeout(()=>{window.__dbg={SUBF,renderSub,fillFor:id=>fillFor(id),pb:f=>path.bounds(bigPart(f)),tz,renderTZ,tzOffset,sunPos,flagDistract,VOX,flagCols,flagSim,flagPool,relRender,startTravle,startHL,renderPrint,renderClass,renderMedals,award,checkWrite,buildPrintSvg,sayEs,sayCountry,get game(){return game;},get quiz(){return quiz;},setup,stu,speakLast:()=>window.__lastSpeak};},0);
 
