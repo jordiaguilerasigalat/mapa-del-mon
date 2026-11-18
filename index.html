@@ -2486,15 +2486,16 @@ const CITYCAT=[
  ["sleep","🛏️","Allotjament",t=>/^(hotel|guest_house|apartment|hostel|camp_site|chalet|motel)$/.test(t.tourism)],
  ["edu","🏫","Escoles i cultura",t=>/^(school|kindergarten|college|library|arts_centre|music_school|theatre|cinema)$/.test(t.amenity)],
  ["health","💊","Salut",t=>/^(pharmacy|doctors|clinic|hospital|dentist|veterinary)$/.test(t.amenity)||!!t.healthcare],
- ["sport","⚽","Esport, parcs i oci",t=>!!(t.sport||/^(sports_centre|pitch|swimming_pool|playground|park|stadium|picnic_site|garden|track)$/.test(t.leisure))],
+ ["sport","⚽","Esport, parcs i oci",t=>(t.name||!/^(swimming_pool|pitch|garden|track)$/.test(t.leisure))&&t.access!=="private"&&!!(t.sport||/^(sports_centre|pitch|swimming_pool|playground|park|stadium|picnic_site|garden|track)$/.test(t.leisure))],
  ["serv","🏢","Serveis públics",t=>/^(townhall|police|post_office|fire_station|community_centre|social_facility|marketplace|recycling|fuel|bank|atm|parking|toilets|drinking_water|fountain|bus_station|courthouse|grave_yard|bench|waste_basket)$/.test(t.amenity)&&!/^(bench|waste_basket)$/.test(t.amenity)],
  ["nat","🌿","Natura (fonts, coves, cims…)",t=>!!(t.natural&&/^(peak|spring|cave_entrance|cliff|saddle|tree|rock)$/.test(t.natural))||t.amenity==="fountain"],
  ["place","🏘️","Barris, partides i llogarets",t=>!!(t.place&&/^(neighbourhood|suburb|quarter|hamlet|locality|isolated_dwelling|village|town|square)$/.test(t.place))]];
 const CITYLAY=[["bound","🗺️","Límit del terme"],["land","🌳","Camps i boscos"],["water","💧","Rius i barrancs"],["bld","🏠","Edificis"],["road","🛣️","Carreteres"],["street","🏙️","Carrers"],["path","🥾","Camins i senderes"],["rail","🚆","Tren"],["names","🏷️","Noms dels carrers"],["poinm","🔤","Noms dels llocs"]];
-let CV={on:false,id:null,data:null,vis:Object.assign({},store.get("mapa_cityvis",{})),k:1,q:""};
-const cvOn=k=>CV.vis[k]!==false;
+let CV={on:false,id:null,data:null,vis:Object.assign({},store.get("mapa_cityvis2",{})),k:1,q:""};
+const cvOn=k=>CV.vis[k]===undefined?k==="bound":!!CV.vis[k];
 function cityOpen(id){const m=SPAIN.mun[id];if(!m)return;CV.id=id;CV.on=true;CV.sel=null;
   let w=$("#cityview");if(!w){w=document.createElement("div");w.id="cityview";$("#mapwrap").appendChild(w);}
+  if(!CV.ro&&window.ResizeObserver){CV.ro=new ResizeObserver(()=>{const c=$("#cityview");if(CV.on&&CV.data&&c&&c.clientWidth&&(CV.pending||CV.sz!==c.clientWidth+"x"+c.clientHeight)){clearTimeout(CV.rt);CV.rt=setTimeout(cityDraw,150);}});CV.ro.observe(w);}
   w.innerHTML=`<svg id="citysvg"></svg><div class="cityattr">© Col·laboradors d'<b>OpenStreetMap</b> (ODbL)</div><div class="citybtns"><button id="cvin">+</button><button id="cvout">−</button><button id="cvfit" title="Tot el terme">⟲</button><button id="cvclose" title="Tancar">✖</button></div>`;w.style.display="block";
   $("#cvclose").onclick=cityClose;
   renderCitySide("loading");cityLoad(id);}
@@ -2508,7 +2509,7 @@ async function cityLoad(id,force){const key="mapa_city_"+id;let cached=null;try{
  nwr["amenity"](area.a);nwr["shop"](area.a);nwr["tourism"](area.a);nwr["historic"](area.a);nwr["craft"](area.a);nwr["office"](area.a);node["place"](area.a);nwr["sport"](area.a);nwr["healthcare"](area.a);node["natural"](area.a););out geom qt;`;
   const urls=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];let err=null;
   for(const u of urls){try{const r=await fetch(u,{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();
-      CV.data=cityPack(j);try{localStorage.setItem(key,JSON.stringify({t:Date.now(),d:CV.data}));}catch(e){}if(CV.id===id){cityDraw();renderCitySide();}return;}catch(e){err=e;}}
+      CV.data=cityPack(j);try{localStorage.setItem(key,JSON.stringify({t:Date.now(),d:CV.data}));}catch(e){}if(CV.id===id&&CV.on){cityDraw();renderCitySide();}return;}catch(e){err=e;}}
   if(cached){CV.data=cached.d;cityDraw();renderCitySide();toast("Sense connexió: es mostren les dades guardades");return;}
   renderCitySide("error",err);}
 const r5=x=>Math.round(x*1e5)/1e5;
@@ -2530,7 +2531,7 @@ function cityPack(j){const D={bound:null,ways:[],pois:[]};const seen=new Set();
         h:t.opening_hours||"",w:t.website||t["contact:website"]||"",a:[t["addr:street"],t["addr:housenumber"]].filter(Boolean).join(", "),ele:t.ele||"",d:t.description||t["description:ca"]||""});}}
   return D;}
 const TYNM={bar:"bar",cafe:"cafeteria",restaurant:"restaurant",pub:"pub",fast_food:"menjar ràpid",ice_cream:"gelateria",supermarket:"supermercat",bakery:"forn",butcher:"carnisseria",hairdresser:"perruqueria",pharmacy:"farmàcia",doctors:"metge",clinic:"centre de salut",school:"escola",kindergarten:"escola infantil",library:"biblioteca",townhall:"ajuntament",police:"policia",post_office:"correus",place_of_worship:"església",park:"parc",playground:"parc infantil",pitch:"pista esportiva",swimming_pool:"piscina",sports_centre:"poliesportiu",peak:"cim",spring:"font",cave_entrance:"cova",neighbourhood:"barri",hamlet:"llogaret",locality:"partida",isolated_dwelling:"casa aïllada",fountain:"font",museum:"museu",viewpoint:"mirador",castle:"castell",ruins:"ruïnes",monument:"monument",memorial:"memorial",bank:"banc",fuel:"gasolinera",marketplace:"mercat",cemetery:"cementeri",grave_yard:"cementeri",convenience:"botiga d'alimentació",greengrocer:"fruiteria",kiosk:"quiosc",car_repair:"taller mecànic",company:"empresa",industrial:"indústria",hotel:"hotel",guest_house:"casa rural",apartment:"apartament",camp_site:"càmping",community_centre:"centre social",social_facility:"centre social",veterinary:"veterinari",dentist:"dentista",attraction:"atracció",information:"informació",artwork:"obra d'art",square:"plaça"};
-function cityDraw(){const D=CV.data;if(!D)return;const svgC=d3.select("#citysvg");svgC.selectAll("*").remove();const w=$("#cityview").clientWidth,h=$("#cityview").clientHeight;
+function cityDraw(){const D=CV.data;if(!D)return;const cvw=$("#cityview");if(!cvw||!cvw.clientWidth||!cvw.clientHeight){CV.pending=true;return;}CV.pending=false;const svgC=d3.select("#citysvg");svgC.selectAll("*").remove();const w=cvw.clientWidth,h=cvw.clientHeight;CV.sz=w+"x"+h;
   const bf=D.bound&&D.bound.length?{type:"MultiLineString",coordinates:D.bound}:{type:"MultiPoint",coordinates:D.pois.map(p=>p.c)};
   const pj=d3.geoMercator().fitExtent([[30,30],[w-30,h-30]],bf);const pg=d3.geoPath(pj);CV.pj=pj;
   const root=svgC.append("g");const G={};["land","water","bld","path","street","road","rail","bound","names","poi"].forEach(k=>G[k]=root.append("g").attr("class","cv-"+k));CV.G=G;
@@ -2574,7 +2575,7 @@ function cityPoi(d){CV.sel=d;const cat=CITYCAT.find(c=>c[0]===d.k);const box=$("
   $("#cvix").onclick=()=>{box.innerHTML="";};
   const p=CV.pj(d.c);const w=$("#cityview").clientWidth,h=$("#cityview").clientHeight;const k=Math.max(CV.k,4);CV.svg.transition().duration(600).call(CV.zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-p[0],-p[1]));}
 function renderCitySide(state,err){const m=SPAIN.mun[CV.id];const D=CV.data;
-  if(state==="loading"){side.innerHTML=`<div class="row"><button class="btn sec small" id="cvb">← Tornar</button></div><h2>🏘️ ${esc(m.nm)} en detall</h2><div class="card">⏳ Carregant carrers i llocs d'interés des d'OpenStreetMap… Pot tardar uns segons la primera vegada; després queda guardat.</div>`;$("#cvb").onclick=cityClose;return;}
+  if(state==="loading"){side.innerHTML=`<div class="row"><button class="btn sec small" id="cvb">← Tornar</button></div><h2>🏘️ ${esc(m.nm)} en detall</h2><div class="card">⏳ Carregant carrers i llocs d'interés des d'OpenStreetMap… La primera vegada pot tardar fins a un minut; després queda guardat en este navegador i obri de seguida.</div>`;$("#cvb").onclick=cityClose;return;}
   if(state==="error"){side.innerHTML=`<div class="row"><button class="btn sec small" id="cvb">← Tornar</button></div><h2>🏘️ ${esc(m.nm)} en detall</h2><div class="card">😕 No s'han pogut carregar les dades. Cal connexió a internet.<div class="small">${esc(String(err&&err.message||""))}</div></div><button class="btn" id="cvr">🔄 Tornar a provar</button>`;$("#cvb").onclick=cityClose;$("#cvr").onclick=()=>{renderCitySide("loading");cityLoad(CV.id,true);};return;}
   const cnt={};D.pois.forEach(p=>cnt[p.k]=(cnt[p.k]||0)+1);const lc={};D.ways.forEach(w=>lc[w.L]=(lc[w.L]||0)+1);
   const tg=(k,ic,t,n)=>`<button data-cv="${k}" class="${cvOn(k)?"on":""}">${ic} ${t}${n!=null?` <span class="small">${n}</span>`:""}</button>`;
@@ -2586,12 +2587,12 @@ function renderCitySide(state,err){const m=SPAIN.mun[CV.id];const D=CV.data;
   <h3>Mapa</h3><div class="seg cvseg">${CITYLAY.filter(([k])=>k==="names"||k==="poinm"||k==="bound"||lc[k]).map(([k,ic,t])=>tg(k,ic,t)).join("")}</div>
   <div id="cvinfo"></div>
   <input type="text" id="cvq" placeholder="🔎 Busca un bar, carrer, botiga…" value="${esc(CV.q)}" style="width:100%">
-  <div class="cvlist">${list.map((p,i)=>`<div class="cvli" data-i="${D.pois.indexOf(p)}">${(CITYCAT.find(c=>c[0]===p.k)||[])[1]} <b>${esc(p.n)}</b> <span class="small">${esc(TYNM[p.ty]||p.ty)}</span></div>`).join("")||`<div class="small">No hi ha cap lloc amb nom amb estos filtres.</div>`}</div>
+  <div class="cvlist">${list.map((p,i)=>`<div class="cvli" data-i="${D.pois.indexOf(p)}">${(CITYCAT.find(c=>c[0]===p.k)||[])[1]} <b>${esc(p.n)}</b> <span class="small">${esc(TYNM[p.ty]||p.ty)}</span></div>`).join("")||`<div class="small">Tot està amagat. Toca una categoria de dalt (o «Mostrar-ho tot») per vore els llocs.</div>`}</div>
   <p class="small">Dades: © col·laboradors d'OpenStreetMap (llicència ODbL). Poden faltar llocs o estar desactualitzats: qualsevol persona els pot afegir a openstreetmap.org.</p>
   <button class="btn sec small" id="cvupd">🔄 Actualitzar les dades</button>`;
   $("#cvb").onclick=cityClose;$("#cvupd").onclick=()=>{renderCitySide("loading");cityLoad(CV.id,true);};
-  side.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const k=b.dataset.cv;CV.vis[k]=!cvOn(k);store.set("mapa_cityvis",CV.vis);cityVis();const st=side.scrollTop;renderCitySide();side.scrollTop=st;});
-  const setAll=v=>{CITYCAT.forEach(c=>CV.vis[c[0]]=v);["bld","names","poinm","path","rail","land","water","road","street"].forEach(k=>CV.vis[k]=v);store.set("mapa_cityvis",CV.vis);cityVis();renderCitySide();};
+  side.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const k=b.dataset.cv;CV.vis[k]=!cvOn(k);store.set("mapa_cityvis2",CV.vis);cityVis();const st=side.scrollTop;renderCitySide();side.scrollTop=st;});
+  const setAll=v=>{CITYCAT.forEach(c=>CV.vis[c[0]]=v);["bld","names","poinm","path","rail","land","water","road","street"].forEach(k=>CV.vis[k]=v);store.set("mapa_cityvis2",CV.vis);cityVis();renderCitySide();};
   $("#cvall").onclick=()=>setAll(true);$("#cvnone").onclick=()=>setAll(false);
   const qi=$("#cvq");qi.oninput=()=>{CV.q=qi.value.trim().toLowerCase();cityVis();clearTimeout(CV.qt);CV.qt=setTimeout(()=>{const st=side.scrollTop;renderCitySide();side.scrollTop=st;const q2=$("#cvq");q2.focus();q2.setSelectionRange(q2.value.length,q2.value.length);},350);};
   side.querySelectorAll(".cvli").forEach(el=>el.onclick=()=>cityPoi(D.pois[+el.dataset.i]));}
