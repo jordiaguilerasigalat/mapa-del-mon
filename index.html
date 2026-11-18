@@ -236,7 +236,7 @@ body.bar-v #esbar2 .bardet{padding:4px 6px 0!important}
 #zback{background:#ffd166!important;color:#173a5e;font-size:20px;margin-bottom:6px}#zback:disabled{background:var(--card)!important}
 .lbl.reg{font-weight:800;fill:#173a5e}.lbl.reg-ccaa{text-transform:uppercase;letter-spacing:.06em}body.dark .lbl.reg{fill:#dfe8f5}
 body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
-#cityview{position:absolute;inset:0;z-index:30;background:#f7f5ef;display:none}#cityview svg{width:100%;height:100%;display:block}
+#cityview{position:absolute;inset:0;z-index:30;background:#f7f5ef;display:none}#cityview svg{width:100%;height:100%;display:block}#cvpop{display:none;position:absolute;left:10px;bottom:28px;right:64px;max-width:380px;z-index:6;max-height:45%;overflow:auto;box-shadow:0 4px 18px rgba(0,0,0,.25);border-radius:12px}#cvpop .card{margin:0}
 .cityattr{position:absolute;right:8px;bottom:6px;font-size:11px;background:rgba(255,255,255,.85);padding:2px 6px;border-radius:6px;color:#333}
 .citybtns{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}.citybtns button{width:40px;height:40px;border-radius:10px;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:18px;font-weight:800;color:#173a5e}
 .cvname{fill:#333;stroke:#fff;paint-order:stroke;font-weight:600;pointer-events:none}
@@ -2496,7 +2496,7 @@ const cvOn=k=>CV.vis[k]===undefined?k==="bound":!!CV.vis[k];
 function cityOpen(id){const m=SPAIN.mun[id];if(!m)return;CV.id=id;CV.on=true;CV.sel=null;
   let w=$("#cityview");if(!w){w=document.createElement("div");w.id="cityview";$("#mapwrap").appendChild(w);}
   if(!CV.ro&&window.ResizeObserver){CV.ro=new ResizeObserver(()=>{const c=$("#cityview");if(CV.on&&CV.data&&c&&c.clientWidth&&(CV.pending||CV.sz!==c.clientWidth+"x"+c.clientHeight)){clearTimeout(CV.rt);CV.rt=setTimeout(cityDraw,150);}});CV.ro.observe(w);}
-  w.innerHTML=`<svg id="citysvg"></svg><div class="cityattr">© Col·laboradors d'<b>OpenStreetMap</b> (ODbL)</div><div class="citybtns"><button id="cvin">+</button><button id="cvout">−</button><button id="cvfit" title="Tot el terme">⟲</button><button id="cvclose" title="Tancar">✖</button></div>`;w.style.display="block";
+  w.innerHTML=`<svg id="citysvg"></svg><div id="cvpop"></div><div class="cityattr">© Col·laboradors d'<b>OpenStreetMap</b> (ODbL)</div><div class="citybtns"><button id="cvin">+</button><button id="cvout">−</button><button id="cvfit" title="Tot el terme">⟲</button><button id="cvclose" title="Tancar">✖</button></div>`;w.style.display="block";
   $("#cvclose").onclick=cityClose;
   renderCitySide("loading");cityLoad(id);}
 function cityClose(){CV.on=false;const w=$("#cityview");if(w)w.style.display="none";if(tab==="spain"&&CV.id)renderEs("mun",CV.id);}
@@ -2569,11 +2569,13 @@ function cityScale(){const k=CV.k||1,G=CV.G;if(!G)return;
 function cityVis(){const G=CV.G;if(!G)return;CITYLAY.forEach(([k])=>{if(G[k])G[k].style("display",cvOn(k)?null:"none");});
   G.poi.selectAll("g.cvpoi").style("display",d=>cvOn(d.k)&&(!CV.q||(d.n+" "+(TYNM[d.ty]||d.ty)).toLowerCase().includes(CV.q))?null:"none");
   d3.select("#citysvg").classed("cvnopn",!cvOn("poinm"));cityScale();}
-function cityPoi(d){CV.sel=d;const cat=CITYCAT.find(c=>c[0]===d.k);const box=$("#cvinfo");if(!box)return;
-  box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><b>${cat[1]} ${esc(d.n||TYNM[d.ty]||d.ty||cat[2])}</b><button class="closex" id="cvix">×</button></div>
+function cityPoi(d){CV.sel=d;const cat=CITYCAT.find(c=>c[0]===d.k)||["","📍",""];const box=$("#cvinfo"),pop=$("#cvpop");
+  const html=`<div class="card"><div class="row" style="justify-content:space-between;gap:8px"><b>${cat[1]} ${esc(d.n||TYNM[d.ty]||d.ty||cat[2])}</b><button class="closex cvix" title="Tancar">×</button></div>
    <div class="small">${esc(cat[2])}${d.ty?` · ${esc(TYNM[d.ty]||d.ty)}`:""}</div>${d.a?`<div class="small">📍 ${esc(d.a)}</div>`:""}${d.ele?`<div class="small">⛰️ ${esc(d.ele)} m</div>`:""}${d.h?`<div class="small">🕐 ${esc(d.h)}</div>`:""}${d.d?`<div class="small">${esc(d.d)}</div>`:""}${d.w?`<div class="small">🌐 <a href="${esc(d.w)}" target="_blank" rel="noopener">${esc(d.w.replace(/^https?:\/\//,"").slice(0,40))}</a></div>`:""}</div>`;
-  $("#cvix").onclick=()=>{box.innerHTML="";};
-  const p=CV.pj(d.c);const w=$("#cityview").clientWidth,h=$("#cityview").clientHeight;const k=Math.max(CV.k,4);CV.svg.transition().duration(600).call(CV.zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-p[0],-p[1]));}
+  if(box)box.innerHTML=html;if(pop){pop.innerHTML=html;pop.style.display="block";}
+  document.querySelectorAll(".cvix").forEach(b=>b.onclick=cityPopClose);
+  const p=CV.pj(d.c);const w=$("#cityview").clientWidth,h=$("#cityview").clientHeight;const k=Math.max(CV.k,4);CV.svg.transition().duration(600).call(CV.zoom.transform,d3.zoomIdentity.translate(w/2,h*(pop?0.32:0.5)).scale(k).translate(-p[0],-p[1]));}
+function cityPopClose(){const b=$("#cvinfo"),p=$("#cvpop");if(b)b.innerHTML="";if(p){p.innerHTML="";p.style.display="none";}CV.sel=null;}
 function renderCitySide(state,err){const m=SPAIN.mun[CV.id];const D=CV.data;
   if(state==="loading"){side.innerHTML=`<div class="row"><button class="btn sec small" id="cvb">← Tornar</button></div><h2>🏘️ ${esc(m.nm)} en detall</h2><div class="card">⏳ Carregant carrers i llocs d'interés des d'OpenStreetMap… La primera vegada pot tardar fins a un minut; després queda guardat en este navegador i obri de seguida.</div>`;$("#cvb").onclick=cityClose;return;}
   if(state==="error"){side.innerHTML=`<div class="row"><button class="btn sec small" id="cvb">← Tornar</button></div><h2>🏘️ ${esc(m.nm)} en detall</h2><div class="card">😕 No s'han pogut carregar les dades. Cal connexió a internet.<div class="small">${esc(String(err&&err.message||""))}</div></div><button class="btn" id="cvr">🔄 Tornar a provar</button>`;$("#cvb").onclick=cityClose;$("#cvr").onclick=()=>{renderCitySide("loading");cityLoad(CV.id,true);};return;}
