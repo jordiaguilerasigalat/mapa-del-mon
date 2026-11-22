@@ -236,7 +236,19 @@ body.bar-v #esbar2 .bardet{padding:4px 6px 0!important}
 #zback{background:#ffd166!important;color:#173a5e;font-size:20px;margin-bottom:6px}#zback:disabled{background:var(--card)!important}
 .lbl.reg{font-weight:800;fill:#173a5e}.lbl.reg-ccaa{text-transform:uppercase;letter-spacing:.06em}body.dark .lbl.reg{fill:#dfe8f5}
 body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
-#cityview{position:absolute;inset:0;z-index:30;background:#f7f5ef;display:none}#cityview svg{width:100%;height:100%;display:block}#cvpop{display:none;position:absolute;left:10px;bottom:28px;right:64px;max-width:380px;z-index:6;max-height:45%;overflow:auto;box-shadow:0 4px 18px rgba(0,0,0,.25);border-radius:12px}#cvpop .card{margin:0}
+#cityview{position:absolute;inset:0;z-index:30;background:#f7f5ef;display:none}#cityview svg{width:100%;height:100%;display:block}#agview{position:absolute;inset:0;z-index:31;background:#d7e9f5;display:none;touch-action:none;user-select:none;-webkit-user-select:none}#agview svg{width:100%;height:100%;display:block}
+.agln{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.agln.agriv{stroke-width:2.4px}.agln.agserralada{stroke-width:11px;opacity:.32}.agln.agserra{stroke-width:7px;opacity:.55}
+.agln.hl{opacity:.85}.agln.agriv.hl{stroke-width:5px;stroke:#e2574c}.agln.ok{opacity:.6}
+.agb .agbn{font:800 10px system-ui,sans-serif;fill:#173a5e;pointer-events:none}.agb .agnm{font:700 12px system-ui,sans-serif;fill:#1d2b38;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.agb.ok .agbc{fill:#2e9e5b;stroke:#1d6e3e}.agb.ok .agbn{fill:#fff}.agb.ok .agnm{fill:#1d6e3e}.agb.bad .agbc{fill:#fbd5d1;stroke:#c0392b}
+.agb.hl .agbc{fill:#ffd84d;stroke:#e2574c;stroke-width:3.5}.agb.shake{animation:agsh .45s}@keyframes agsh{0%,100%{opacity:1}25%,75%{opacity:.2}50%{opacity:1}}
+.agcan{font:700 11px system-ui,sans-serif;fill:#4a5a6a}
+#agmsg{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#173a5e;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;z-index:7;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:80%;text-align:center;pointer-events:none}#agmsg.ok{background:#2e9e5b}#agmsg.bad{background:#c0392b}
+.agdrag{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}.agdrag.on{background:#ffd84d;border-color:#e2a400}
+.agghost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-130%);box-shadow:0 4px 14px rgba(0,0,0,.3);background:#fff;opacity:.95}
+.agrow{display:flex;align-items:center;gap:6px;margin:4px 0}.agrow input{flex:1;min-width:0;padding:6px 8px;border:1.5px solid var(--cardline);border-radius:8px;font-size:15px;background:var(--card,#fff);color:inherit}
+.agrow.ok input{border-color:#2e9e5b;background:#e3f5ea;color:#1d6e3e}.agrow.bad input{border-color:#c0392b;background:#fdecea}
+.agnum{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:2.5px solid;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}.agsol{color:#c0392b;font-weight:700}#cvpop{display:none;position:absolute;left:10px;bottom:28px;right:64px;max-width:380px;z-index:6;max-height:45%;overflow:auto;box-shadow:0 4px 18px rgba(0,0,0,.25);border-radius:12px}#cvpop .card{margin:0}
 .cityattr{position:absolute;right:8px;bottom:6px;font-size:11px;background:rgba(255,255,255,.85);padding:2px 6px;border-radius:6px;color:#333}
 .citybtns{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}.citybtns button{width:40px;height:40px;border-radius:10px;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:18px;font-weight:800;color:#173a5e}
 .cvname{fill:#333;stroke:#fff;paint-order:stroke;font-weight:600;pointer-events:none}
@@ -2601,6 +2613,179 @@ function renderCitySide(state,err){const m=SPAIN.mun[CV.id];const D=CV.data;
 // botó a la fitxa de cada poble
 {const add=(L,id)=>{if(L!=="mun")return;const b=side.querySelector("#say");if(!b||$("#cvopen"))return;b.parentNode.insertAdjacentHTML("beforebegin",`<button class="btn" id="cvopen" style="margin:6px 0">🏘️ Vore ${esc(SPAIN.mun[id].nm)} en detall (carrers, bars, monuments…)</button>`);$("#cvopen").onclick=()=>cityOpen(id);};
  const w=fn=>function(L,id,...a){const r=fn.call(this,L,id,...a);try{add(L,id);}catch(e){}return r;};renderEs=w(renderEs);HPAN.renderEs=w(HPAN.renderEs);}
+
+
+// ===== Joc: 50 accidents geogràfics d'Espanya =====
+const AG_CAT=[["riu","〰️","Rius","#2f7fd0"],["serralada","⛰️","Serralades i muntanyes","#8a5a2b"],["cap","📍","Caps","#37474f"],["serra","🏔️","Serres i massissos","#b5762f"],["pic","🔺","Pics","#c0392b"],["golf","🌊","Golfs","#12839b"]];
+const AG_CM={};AG_CAT.forEach(c=>AG_CM[c[0]]=c);
+const AG=[
+ ["riu","Riu Túria",["turia"],{r:"turia",a:[-0.95,39.75]}],
+ ["riu","Riu Xúquer",["jucar","xuquer"],{r:"xuquer",a:[-1.95,39.3]}],
+ ["riu","Riu Guadalquivir",["guadalquivir"],{r:"guadalquivir",a:[-4.8,37.88]}],
+ ["riu","Riu Miño",["minyo","minho","mino"],{r:"minyo",a:[-7.6,42.95]}],
+ ["riu","Riu Segura",["segura"],{r:"segura",a:[-1.6,38.2]}],
+ ["riu","Riu Tajo",["tajo","tejo","taio"],{r:"tajo",a:[-4.4,39.9]}],
+ ["riu","Riu Guadiana",["guadiana"],{r:"guadiana",a:[-6.4,38.92]}],
+ ["riu","Riu Ebre",["ebre","ebro"],{r:"ebre",a:[-0.9,41.65]}],
+ ["riu","Riu Duero",["duero","douro","duer"],{r:"duero",a:[-4.6,41.6]}],
+ ["serralada","Serralada Cantàbrica",["cantabrica","cantabric","cantabrico"],{l:[[-7.3,42.85],[-6.6,43.0],[-5.6,43.05],[-4.7,43.1],[-4.0,43.05],[-3.5,43.05]],a:[-6.2,43.02]}],
+ ["serralada","Serralada dels Pirineus",["pirineus","pirineos","pirineu","pirineo"],{l:[[-1.7,43.08],[-0.9,42.88],[0.0,42.72],[0.7,42.65],[1.5,42.55],[2.3,42.45],[3.1,42.45]],a:[1.45,42.56]}],
+ ["serralada","Serralada Ibèrica",["iberica","iberic","iberico","sistema iberic"],{l:[[-3.3,42.15],[-2.6,41.9],[-2.0,41.65],[-1.65,41.1],[-1.4,40.6],[-1.0,40.15],[-0.45,39.9]],a:[-1.8,41.4]}],
+ ["serralada","Serralades Bètiques",["betiques","betica","betic","beticas","betico"],{l:[[-5.6,36.55],[-4.8,36.85],[-3.6,37.05],[-2.6,37.45],[-1.6,37.95],[-0.6,38.55],[0.1,38.78]],a:[-2.35,37.55]}],
+ ["serralada","Serralada de Sierra Morena",["morena","sierra morena","serra morena"],{l:[[-7.3,38.0],[-6.3,37.95],[-5.3,38.1],[-4.3,38.3],[-3.2,38.42],[-2.6,38.5]],a:[-5.3,38.1]}],
+ ["serralada","Serralada del Sistema Central",["central","sistema central"],{l:[[-7.6,40.35],[-6.6,40.3],[-5.7,40.25],[-5.0,40.3],[-4.2,40.75],[-3.6,41.05],[-3.1,41.2]],a:[-6.6,40.3]}],
+ ["serralada","Muntanyes de Lleó",["lleo","leon"],{l:[[-6.95,42.6],[-6.55,42.42],[-6.2,42.25]],a:[-6.55,42.42]}],
+ ["serralada","Muntanyes Basques",["basques","bascos","vascos","vasques","euskal"],{l:[[-3.2,43.05],[-2.6,42.98],[-2.0,42.95],[-1.6,43.02]],a:[-2.3,42.96]}],
+ ["serralada","Muntanyes de Toledo",["toledo"],{l:[[-5.4,39.45],[-4.8,39.45],[-4.2,39.47],[-3.6,39.55]],a:[-4.6,39.46]}],
+ ["cap","Cap de Creus",["creus"],{p:[3.317,42.319]}],
+ ["cap","Cap de la Nau",["nau","nao"],{p:[0.233,38.733]}],
+ ["cap","Cap de Peñas",["penas","penyes","peñas"],{p:[-5.85,43.656]}],
+ ["cap","Cap de Gata",["gata"],{p:[-2.193,36.722]}],
+ ["cap","Cap de Matxitxaco",["matxitxaco","machichaco","matxitxako"],{p:[-2.754,43.455]}],
+ ["cap","Cap de Finisterre",["finisterre","fisterra","finisterra"],{p:[-9.272,42.883]}],
+ ["cap","Cap Ortegal",["ortegal"],{p:[-7.87,43.77]}],
+ ["cap","Cap de Palos",["palos"],{p:[-0.692,37.636]}],
+ ["cap","Cap d'Ajo",["ajo"],{p:[-3.588,43.51]}],
+ ["cap","Cap de São Vicente",["sao vicente","san vicente","sant vicent","sant vicenc","vicente"],{p:[-8.997,37.023]}],
+ ["serra","Serra de la Demanda",["demanda"],{l:[[-3.35,42.26],[-3.1,42.2],[-2.9,42.14]],a:[-3.1,42.2]}],
+ ["serra","Serra d'Albarrasí",["albarrasi","albarracin"],{l:[[-1.8,40.48],[-1.6,40.42],[-1.4,40.36]],a:[-1.6,40.42]}],
+ ["serra","Serra de Javalambre",["javalambre"],{l:[[-1.2,40.12],[-1.05,40.05],[-0.9,39.98]],a:[-1.05,40.05]}],
+ ["serra","Serra de Conca",["conca","cuenca"],{l:[[-2.1,40.5],[-1.95,40.3],[-1.8,40.1]],a:[-1.95,40.3]}],
+ ["serra","Serra de Gredos",["gredos"],{l:[[-5.7,40.28],[-5.3,40.27],[-4.9,40.3]],a:[-5.3,40.27]}],
+ ["serra","Serra de Guadarrama",["guadarrama"],{l:[[-4.3,40.7],[-4.05,40.8],[-3.8,40.9]],a:[-4.05,40.8]}],
+ ["serra","Serra Picos de Urbión",["urbion"],{l:[[-3.0,41.98],[-2.85,42.0],[-2.7,42.03]],a:[-2.85,42.0]}],
+ ["serra","Serra Picos de Europa",["europa"],{l:[[-5.05,43.22],[-4.8,43.18],[-4.55,43.15]],a:[-4.8,43.18]}],
+ ["serra","Serra de Tramuntana",["tramuntana","tramontana"],{l:[[2.35,39.6],[2.7,39.78],[3.1,39.92]],a:[2.7,39.78]}],
+ ["serra","Massís Galaic",["galaic","galaico","massis galaic","macizo galaico"],{l:[[-8.2,42.55],[-7.75,42.35],[-7.3,42.2],[-6.95,42.15]],a:[-7.6,42.3]}],
+ ["pic","Pic Mont Perdut",["mont perdut","monte perdido","perdut","perdido"],{p:[0.034,42.675]}],
+ ["pic","Pic Aneto",["aneto"],{p:[0.656,42.631]}],
+ ["pic","Pic Turó de l'Home",["turo home","turo de l home","turo"],{p:[2.448,41.775]}],
+ ["pic","Pic Montserrat",["montserrat","sant jeroni"],{p:[1.81,41.6]}],
+ ["pic","Pic Moncayo",["moncayo","montcaio"],{p:[-1.84,41.787]}],
+ ["pic","Pic Mulhacén",["mulhacen"],{p:[-3.311,37.053]}],
+ ["pic","Pic Teide",["teide"],{p:[-16.642,28.272]}],
+ ["golf","Golf de Roses",["roses","rosas"],{p:[3.25,42.17]}],
+ ["golf","Golf de València",["valencia"],{p:[0.15,39.35]}],
+ ["golf","Golf de Biscaia",["biscaia","vizcaya","bizkaia","biscay"],{p:[-3.3,44.05]}],
+ ["golf","Golf de Cadis",["cadis","cadiz"],{p:[-6.95,36.55]}],
+ ["golf","Golf d'Almeria",["almeria"],{p:[-2.55,36.7]}]
+].map((x,i)=>({i,num:i+1,k:x[0],n:x[1],al:x[2],...x[3]}));
+const AG_OFF={"Pic Mont Perdut":[-13,12,1],"Serra Picos de Urbión":[0,0,1],"Cap d'Ajo":[-13,-12,1],"Serra de la Demanda":[0,0,1],"Serra de Conca":[0,0,1],"Serralada del Sistema Central":[0,0,1],"Serralada dels Pirineus":[0,0,0,14],"Cap de Matxitxaco":[13,-12,0]};
+const agNorm=s=>(" "+s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`´·.,\-]/g," ")+" ").replace(/\b(riu|rio|riu|serralada|serralades|serrania|sistema|cordillera|muntanyes|muntanya|montes|monts|serra|serres|sierra|massis|macizo|cap|cabo|pic|pico|picos|pics|golf|golfo|de|del|dels|d|l|la|les|el|els|lo|los|las|i)\b/g," ").replace(/\s+/g," ").trim();
+function agLev(a,b){if(Math.abs(a.length-b.length)>2)return 9;const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];}for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length];}
+function agOk(it,txt){const t=agNorm(txt);if(!t)return false;const cands=[agNorm(it.n),...it.al.map(agNorm)];return cands.some(c=>c===t||(c.length>=5&&agLev(c,t)<=1));}
+const AGV={on:false,mode:"vore",cats:Object.assign(Object.fromEntries(AG_CAT.map(c=>[c[0],true])),store.get("mapa_ag_cats",{})),k:1};
+const agIts=()=>AG.filter(it=>AGV.cats[it.k]);
+function agOpen(mode){AGV.mode=mode;AGV.tab=tab;AGV.on=true;if(typeof CV!=="undefined"&&CV.on){CV.on=false;const c=$("#cityview");if(c)c.style.display="none";}
+  let w=$("#agview");if(!w){w=document.createElement("div");w.id="agview";$("#mapwrap").appendChild(w);
+    if(window.ResizeObserver){new ResizeObserver(()=>{if(AGV.on&&w.clientWidth&&AGV.sz!==w.clientWidth+"x"+w.clientHeight){clearTimeout(AGV.rt);AGV.rt=setTimeout(agDraw,150);}}).observe(w);}}
+  w.innerHTML=`<svg id="agsvg"></svg><div id="agmsg"></div><div class="citybtns"><button id="agin">+</button><button id="agout">−</button><button id="agfit" title="Tot el mapa">⟲</button><button id="agclose" title="Tancar">✖</button></div>`;w.style.display="block";
+  $("#agclose").onclick=()=>agClose();$("#agin").onclick=()=>AGV.svg.transition().call(AGV.zoom.scaleBy,1.6);$("#agout").onclick=()=>AGV.svg.transition().call(AGV.zoom.scaleBy,1/1.6);$("#agfit").onclick=()=>AGV.svg.transition().call(AGV.zoom.transform,d3.zoomIdentity);
+  agStart();}
+function agClose(silent){AGV.on=false;side.style.userSelect="";side.style.webkitUserSelect="";clearInterval(AGV.tm);const w=$("#agview");if(w)w.style.display="none";if(!silent){if(AGV.tab==="spain")renderEsWelcome();else renderGamesMenu();}}
+function agStart(){const its=agIts();AGV.done={};AGV.err=0;AGV.sel=null;AGV.hl=null;AGV.t0=Date.now();AGV.fin=false;AGV.ans={};AGV.checked=false;
+  AGV.pool=d3.shuffle(its.map(it=>it.i));clearInterval(AGV.tm);if(AGV.mode==="facil")AGV.tm=setInterval(()=>{const e=$("#agtime");if(e&&!AGV.fin)e.textContent=agClock();},1000);
+  agDraw();agSide();}
+const agClock=()=>{const s=Math.floor((Date.now()-AGV.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+function agDraw(){const w0=$("#agview");if(!w0||!w0.clientWidth)return;const w=w0.clientWidth,h=w0.clientHeight;AGV.sz=w+"x"+h;
+  const svg=d3.select("#agsvg");svg.selectAll("*").remove();AGV.svg=svg;AGV.bs=Math.max(0.8,Math.min(1,Math.min(w,h*1.3)/900));
+  const cw=Math.min(w*0.3,200),ch=cw*0.42;
+  const pM=d3.geoConicConformal().parallels([36,43]).rotate([3.5,0]).fitExtent([[12,12],[w-56,h-12]],{type:"MultiPoint",coordinates:[[-9.5,43.9],[4.4,43.9],[-9.5,35.9],[4.4,35.9],[-3.5,44.2],[-3.5,35.85]]});
+  const pC=d3.geoMercator().fitExtent([[14,h-14-ch],[14+cw,h-14]],{type:"MultiPoint",coordinates:[[-18.2,27.6],[-13.3,29.45]]});
+  pM.clipExtent([[0,0],[w,h]]);const pj=c=>c[0]<-12.5?pC(c):pM(c);AGV.pj=pj;
+  const gM=svg.append("g");AGV.g=gM;const pathM=d3.geoPath(pM),pathC=d3.geoPath(pC);
+  gM.append("rect").attr("x",-5*w).attr("y",-5*h).attr("width",11*w).attr("height",11*h).attr("fill","#d7e9f5");
+  ["PRT","FRA","AND","MAR","DZA"].forEach(k=>{if(featBy[k])gM.append("path").attr("d",pathM(featBy[k])).attr("fill","#ebe7dc").attr("stroke","#b9b2a0").attr("stroke-width",.6).attr("vector-effect","non-scaling-stroke");});
+  esCcaa.filter(f=>f.id!=="05").forEach(f=>gM.append("path").attr("d",pathM(f)).attr("fill","#f8f4e8").attr("stroke","#cfc6b0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke"));
+  gM.append("rect").attr("x",14).attr("y",h-14-ch).attr("width",cw).attr("height",ch).attr("fill","#d7e9f5").attr("stroke","#7a8a99").attr("stroke-width",1).attr("vector-effect","non-scaling-stroke");
+  const can=esCcaa.find(f=>f.id==="05");if(can)gM.append("path").attr("d",pathC(can)).attr("fill","#f8f4e8").attr("stroke","#cfc6b0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");
+  gM.append("text").attr("x",18).attr("y",h-18-ch+14).attr("class","agcan").text("Illes Canàries");
+  // geometria de cada element
+  const its=agIts();const gL=gM.append("g"),gB=gM.append("g");const line=d3.line().curve(d3.curveCatmullRom);
+  its.forEach(it=>{const c=AG_CM[it.k][3];let lp=null;
+    if(it.r){const f=esRiv.find(x=>x.id===it.r);if(f){lp=gL.append("path").attr("d",pathM(f)).attr("class","agln agriv").attr("stroke",c);
+        let best=null,bd=1e9;(f.geometry.type==="LineString"?[f.geometry.coordinates]:f.geometry.coordinates).forEach(l=>l.forEach(q=>{const dd=(q[0]-it.a[0])**2+(q[1]-it.a[1])**2;if(dd<bd){bd=dd;best=q;}}));it.ap=pM(best||it.a);}}
+    else if(it.l){lp=gL.append("path").attr("d",line(it.l.map(pj))).attr("class","agln ag"+it.k).attr("stroke",c);it.ap=pj(it.a);}
+    else it.ap=pj(it.p);
+    it.lp=lp;});
+  AGV.badges=gB.selectAll("g.agb").data(its,d=>d.i).join("g").attr("class",d=>"agb ag-"+d.k).style("cursor","pointer");
+  AGV.badges.each(function(d){const g=d3.select(this);const pt=!!d.p&&d.k!=="golf";const c=AG_CM[d.k][3];
+    if(d.k==="pic")g.append("path").attr("d","M0,-7L6.5,5H-6.5Z").attr("fill",c).attr("stroke","#fff").attr("stroke-width",1.2);
+    if(d.k==="cap")g.append("circle").attr("r",4).attr("fill",c).attr("stroke","#fff").attr("stroke-width",1.2);
+    const o=AG_OFF[d.n]||[];const bx=o.length?o[0]:pt?13:0,by=o.length?o[1]+(o[3]||0):pt?-12:0;d.bx=bx;d.by=by;const lf=!!o[2];
+    g.append("circle").attr("class","agbc").attr("cx",bx).attr("cy",by).attr("r",10).attr("fill","#fff").attr("stroke",c).attr("stroke-width",2.2);
+    g.append("text").attr("class","agbn").attr("x",bx).attr("y",by+3.8).attr("text-anchor","middle").text(d.num);
+    g.append("text").attr("class","agnm").attr("x",lf?bx-13:bx+13).attr("y",by+4).attr("text-anchor",lf?"end":"start").text(d.n);});
+  AGV.badges.on("click",(e,d)=>{e.stopPropagation();agBadgeClick(d);});
+  AGV.zoom=d3.zoom().scaleExtent([1,14]).on("zoom",e=>{AGV.k=e.transform.k;gM.attr("transform",e.transform);agScale();});
+  svg.call(AGV.zoom).on("dblclick.zoom",null);agScale();agRefresh();}
+function agScale(){if(!AGV.badges)return;const k=AGV.k,bs=AGV.bs||1;AGV.badges.attr("transform",d=>`translate(${d.ap[0]},${d.ap[1]}) scale(${bs*Math.min(1.25,Math.pow(k,0.5))/k})`);}
+function agRefresh(){if(!AGV.badges)return;const m=AGV.mode;
+  AGV.badges.classed("ok",d=>m!=="vore"&&(AGV.done[d.i]||(AGV.checked&&AGV.res&&AGV.res[d.i]===1))).classed("bad",d=>m==="dificil"&&AGV.checked&&AGV.res&&AGV.res[d.i]===0).classed("hl",d=>AGV.hl===d.i)
+    .select(".agnm").style("display",d=>(m==="vore"||AGV.done[d.i]||(m==="dificil"&&(AGV.reveal||(AGV.res&&AGV.res[d.i]===1))))?null:"none").text(d=>d.n);
+  AGV.badges.filter(d=>AGV.hl===d.i).raise();
+  agIts().forEach(it=>{if(it.lp)it.lp.classed("hl",AGV.hl===it.i).classed("ok",m!=="vore"&&!!AGV.done[it.i]);});}
+function agFocus(i,zoom){AGV.hl=i;agRefresh();const it=AG[i];if(zoom&&it.ap){const w=$("#agview").clientWidth,h=$("#agview").clientHeight;const k=Math.max(AGV.k,2.5);AGV.svg.transition().duration(500).call(AGV.zoom.transform,d3.zoomIdentity.translate(w/2,h*0.42).scale(k).translate(-it.ap[0],-it.ap[1]));}}
+function agMsg(t,cls){const m=$("#agmsg");if(!m)return;m.className=cls||"";m.textContent=t;m.style.display=t?"block":"none";clearTimeout(AGV.mt);if(t)AGV.mt=setTimeout(()=>{m.style.display="none";},1800);}
+function agBadgeClick(d){
+  if(AGV.mode==="vore"){agFocus(d.i);agMsg(d.num+". "+d.n);agSide(true);return;}
+  if(AGV.mode==="facil"){if(AGV.done[d.i]){agMsg(d.n);return;}if(AGV.sel==null){agFocus(d.i);agMsg("Ara tria el nom a la llista o arrossega'l ací");return;}agTry(AGV.sel,d.i);return;}
+  if(AGV.mode==="dificil"){agFocus(d.i);const inp=document.querySelector(`#agin${d.i}`);if(inp){inp.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(()=>inp.focus({preventScroll:true}),250);}}}
+function agTry(nameI,targetI){
+  if(nameI===targetI){AGV.done[targetI]=true;AGV.sel=null;AGV.hl=null;agMsg("✅ "+AG[targetI].n,"ok");}
+  else{AGV.err++;agMsg("❌ No és ací. Torna-ho a provar!","bad");const b=AGV.badges.filter(d=>d.i===targetI);b.classed("shake",false);void b.node().getBBox();b.classed("shake",true);setTimeout(()=>b.classed("shake",false),500);}
+  agRefresh();agSide(true);
+  const tot=agIts().length,n=Object.keys(AGV.done).length;if(n===tot&&!AGV.fin){AGV.fin=true;agFinish();}}
+function agFinish(){const t=agClock();const all=agIts().length===AG.length;const key="mapa_ag_best";const b=store.get(key,null);let rec=false;
+  if(all){const s=Math.round((Date.now()-AGV.t0)/1000);if(!b||AGV.err<b.e||(AGV.err===b.e&&s<b.s)){store.set(key,{e:AGV.err,s,t});rec=true;}}
+  try{if(typeof confetti==="function")confetti();}catch(e){}
+  agSide();const box=$("#agend");if(box)box.innerHTML=`<div class="card" style="border:2px solid #2e9e5b"><h3>🎉 Molt bé!</h3><p>Has col·locat tots els noms en <b>${t}</b> amb <b>${AGV.err}</b> ${AGV.err===1?"error":"errors"}.${rec?" 🏆 Nou rècord!":""}</p><div class="row"><button class="btn" id="agagain">🔄 Tornar a jugar</button><button class="btn sec" id="agtodif">🔴 Provar el difícil</button></div></div>`;
+  const a=$("#agagain");if(a)a.onclick=()=>agStart();const d=$("#agtodif");if(d)d.onclick=()=>{AGV.mode="dificil";agStart();};}
+function agSide(keep){const st=keep?side.scrollTop:0;const its=agIts();const m=AGV.mode;
+  const modes=`<div class="seg" id="agmode">${[["vore","👀 Vore'ls tots"],["facil","🟢 Fàcil"],["dificil","🔴 Difícil"]].map(([v,t])=>`<button data-v="${v}" class="${m===v?"on":""}">${t}</button>`).join("")}</div>`;
+  const cats=`<div class="small" style="margin-top:8px"><b>Què vols practicar?</b></div><div style="margin-top:4px">${AG_CAT.map(c=>`<span class="chip agcat ${AGV.cats[c[0]]?"on":""}" data-c="${c[0]}" style="${AGV.cats[c[0]]?`background:${c[3]};color:#fff;border-color:${c[3]}`:""}">${c[1]} ${c[2]} ${AG.filter(x=>x.k===c[0]).length}</span>`).join("")}</div>`;
+  let body="";
+  if(m==="vore"){body=`<p class="hint" style="display:block">Toca un número del mapa o un nom de la llista per a vore on és.</p>`+AG_CAT.filter(c=>AGV.cats[c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3><div>${its.filter(x=>x.k===c[0]).map(x=>`<span class="chip go agli ${AGV.hl===x.i?"on":""}" data-i="${x.i}"><b>${x.num}</b> ${esc(x.n)}</span>`).join("")}</div>`).join("");}
+  else if(m==="facil"){const left=AGV.pool.filter(i=>!AGV.done[i]);
+    body=`<div class="row" style="justify-content:space-between;margin-top:8px"><span><b>✅ ${Object.keys(AGV.done).length} / ${its.length}</b> · ❌ ${AGV.err}</span><span>⏱️ <span id="agtime">${agClock()}</span></span></div>
+    <p class="small" style="margin:6px 0">Arrossega cada nom fins al seu número del mapa. També pots tocar un nom i després el número.</p><div id="agend"></div>
+    <div id="agchips">${left.map(i=>`<span class="chip agdrag ${AGV.sel===i?"on":""}" data-i="${i}">${AG_CM[AG[i].k][1]} ${esc(AG[i].n)}</span>`).join("")}</div>`;}
+  else{const nOk=AGV.res?Object.values(AGV.res).filter(v=>v===1).length:0;
+    body=`<p class="small" style="margin:6px 0">Escriu el nom de cada número. No cal posar «Riu», «Cap», «Serra»…, i els accents no compten. Toca un número del mapa per a anar a la seua casella.</p>
+    ${AGV.checked?`<div class="card" style="margin:6px 0"><b>Resultat: ${nOk} / ${its.length}</b>${nOk===its.length?" 🎉 Perfecte!":""}</div>`:""}
+    <div class="row" style="margin:6px 0"><button class="btn" id="agcheck">✔️ Corregir</button><button class="btn sec" id="agsol">${AGV.reveal?"🙈 Amagar solucions":"👀 Vore solucions"}</button><button class="btn sec" id="agreset">🔄 Començar de nou</button></div>
+    ${AG_CAT.filter(c=>AGV.cats[c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3>${its.filter(x=>x.k===c[0]).map(x=>{const r=AGV.res?AGV.res[x.i]:undefined;return `<div class="agrow ${r===1?"ok":r===0?"bad":""}"><span class="agnum" style="border-color:${c[3]}">${x.num}</span><input id="agin${x.i}" data-i="${x.i}" autocomplete="off" spellcheck="false" value="${esc(AGV.ans[x.i]||"")}" ${r===1?"disabled":""} placeholder="…">${r===1?"✅":r===0?"❌":""}${AGV.reveal&&r!==1?`<span class="small agsol">${esc(x.n)}</span>`:""}</div>`;}).join("")}`).join("")}`;}
+  side.style.userSelect=m==="facil"?"none":"";side.style.webkitUserSelect=side.style.userSelect;
+  side.innerHTML=`<div class="row"><button class="btn sec small" id="agback">← Tornar</button></div><h2>🏔️ Accidents geogràfics d'Espanya</h2>${modes}${m==="facil"?body+cats:cats+body}`;
+  side.scrollTop=st;
+  $("#agback").onclick=()=>agClose();
+  side.querySelectorAll("#agmode button").forEach(b=>b.onclick=()=>{AGV.mode=b.dataset.v;agStart();});
+  side.querySelectorAll(".agcat").forEach(b=>b.onclick=()=>{const c=b.dataset.c;AGV.cats[c]=!AGV.cats[c];if(!Object.values(AGV.cats).some(Boolean))AGV.cats[c]=true;store.set("mapa_ag_cats",AGV.cats);agStart();});
+  side.querySelectorAll(".agli").forEach(el=>el.onclick=()=>{const i=+el.dataset.i;agFocus(i,true);agSide(true);});
+  if(m==="facil")side.querySelectorAll(".agdrag").forEach(agDragBind);
+  if(m==="dificil"){side.querySelectorAll(".agrow input").forEach(inp=>{const i=+inp.dataset.i;inp.onfocus=()=>{AGV.hl=i;agRefresh();};inp.oninput=()=>{AGV.ans[i]=inp.value;};inp.onkeydown=e=>{if(e.key==="Enter"){const all=[...side.querySelectorAll(".agrow input:not([disabled])")];const n=all[all.indexOf(inp)+1];if(n)n.focus();}};});
+    $("#agcheck").onclick=()=>{AGV.res={};its.forEach(x=>{AGV.res[x.i]=agOk(x,AGV.ans[x.i]||"")?1:0;});AGV.checked=true;agRefresh();agSide(true);};
+    $("#agsol").onclick=()=>{AGV.reveal=!AGV.reveal;agRefresh();agSide(true);};
+    $("#agreset").onclick=()=>{AGV.reveal=false;agStart();};}}
+function agDragBind(el){const i=+el.dataset.i;let ghost=null,sx=0,sy=0,moved=false;
+  el.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();try{getSelection().removeAllRanges();}catch(_){}sx=e.clientX;sy=e.clientY;moved=false;el.setPointerCapture(e.pointerId);
+    const mv=ev=>{if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<6)return;if(!moved){moved=true;ghost=el.cloneNode(true);ghost.classList.add("agghost");document.body.appendChild(ghost);el.style.opacity=.35;}
+      ghost.style.left=ev.clientX+"px";ghost.style.top=ev.clientY+"px";const t=agTarget(ev.clientX,ev.clientY);AGV.hl=t;agRefresh();};
+    const up=ev=>{el.removeEventListener("pointermove",mv);el.removeEventListener("pointerup",up);el.removeEventListener("pointercancel",up);
+      if(ghost){ghost.remove();ghost=null;el.style.opacity="";}try{getSelection().removeAllRanges();}catch(_){}
+      if(moved){const t=agTarget(ev.clientX,ev.clientY);AGV.hl=null;if(t!=null)agTry(i,t);else agRefresh();}
+      else{AGV.sel=AGV.sel===i?null:i;if(AGV.sel!=null&&AGV.hl!=null&&!AGV.done[AGV.hl]){const t=AGV.hl;agTry(i,t);return;}agSide(true);if(AGV.sel!=null)agMsg("Ara toca el número on va «"+AG[i].n+"»");}};
+    el.addEventListener("pointermove",mv);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);});}
+function agTarget(x,y){if(!AGV.badges)return null;let best=null,bd=30*30;AGV.badges.each(function(d){if(AGV.done[d.i])return;const c=this.querySelector(".agbc");if(!c)return;const r=c.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;const dd=(cx-x)**2+(cy-y)**2;if(dd<bd){bd=dd;best=d.i;}});return best;}
+// tancar en canviar de pestanya
+{const _st=setTab;setTab=function(t){if(AGV.on&&t!==AGV.tab)agClose(true);else if(AGV.on&&t===AGV.tab){agClose(true);}return _st.apply(this,arguments);};}
+// botons d'entrada
+{const card=()=>`<div class="card" id="agcard" style="border:2px solid #b5762f"><h3>🏔️ Accidents geogràfics d'Espanya</h3><p class="small">Els 50 rius, serralades, serres, caps, pics i golfs que cal saber. Primer mira'ls i després juga!</p>
+   <div class="row" style="margin-top:6px"><button class="btn sec" data-ag="vore">👀 Vore'ls tots</button><button class="btn" data-ag="facil">🟢 Fàcil (arrossegar)</button><button class="btn" data-ag="dificil" style="background:#c0392b">🔴 Difícil (escriure)</button></div></div>`;
+ const bind=()=>side.querySelectorAll("[data-ag]").forEach(b=>b.onclick=()=>agOpen(b.dataset.ag));
+ const _gm=renderGamesMenu;renderGamesMenu=function(){const r=_gm.apply(this,arguments);try{if(!$("#agcard")){const h=side.querySelector("p.hint");(h||side.querySelector("h2")).insertAdjacentHTML("afterend",card());bind();}}catch(e){}return r;};
+ const _ew=renderEsWelcome;renderEsWelcome=function(){const r=_ew.apply(this,arguments);try{if(!$("#agcard")){const b=$("#esvila");if(b){b.closest(".card,.row").insertAdjacentHTML("afterend",card());bind();}}}catch(e){}return r;};
+ if(typeof HPAN!=="undefined"){if(HPAN.renderGamesMenu)HPAN.renderGamesMenu=renderGamesMenu;if(HPAN.renderEsWelcome)HPAN.renderEsWelcome=renderEsWelcome;}}
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
