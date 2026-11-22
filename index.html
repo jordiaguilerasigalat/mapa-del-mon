@@ -242,7 +242,12 @@ body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
 .agb .agbn{font:800 10px system-ui,sans-serif;fill:#173a5e;pointer-events:none}.agb .agnm{font:700 12px system-ui,sans-serif;fill:#1d2b38;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none}
 .agb.ok .agbc{fill:#2e9e5b;stroke:#1d6e3e}.agb.ok .agbn{fill:#fff}.agb.ok .agnm{fill:#1d6e3e}.agb.bad .agbc{fill:#fbd5d1;stroke:#c0392b}
 .agb.hl .agbc{fill:#ffd84d;stroke:#e2574c;stroke-width:3.5}.agb.shake{animation:agsh .45s}@keyframes agsh{0%,100%{opacity:1}25%,75%{opacity:.2}50%{opacity:1}}
-.agcan{font:700 11px system-ui,sans-serif;fill:#4a5a6a}
+.agcan{font:700 11px system-ui,sans-serif;fill:#4a5a6a}#cfview{position:absolute;inset:0;z-index:31;background:#d7e9f5;display:none;touch-action:none;user-select:none;-webkit-user-select:none}#cfview svg{width:100%;height:100%;display:block}
+.agmsgx{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#173a5e;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;z-index:7;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:80%;text-align:center;pointer-events:none}.agmsgx.ok{background:#2e9e5b}.agmsgx.bad{background:#c0392b}
+#cflegend{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);border-radius:8px;padding:5px 8px;font-size:11px;z-index:5;color:#223;pointer-events:none}#cflegend div{display:flex;align-items:center;gap:5px;line-height:1.5}#cflegend span{width:11px;height:11px;border-radius:3px;display:inline-block}@media (max-width:620px){#cflegend{display:none}}
+.cfrow{display:flex;gap:8px;align-items:center;padding:6px;border-radius:8px;cursor:pointer;border:1px solid transparent}.cfrow:hover,.cfrow.on{background:rgba(127,127,127,.12);border-color:var(--cardline)}.cfrt{flex:1;min-width:0}
+.cfbar{height:8px;background:rgba(127,127,127,.18);border-radius:4px;overflow:hidden;margin:4px 0}.cfbar.sm{height:5px;margin:3px 0 0}.cfbar span{display:block;height:100%;border-radius:4px}
+.cfint{color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700}.cffitxa h4{margin:10px 0 4px}.cffitxa p{margin:4px 0;line-height:1.45}.cfkv{margin:3px 0}
 #agmsg{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#173a5e;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;z-index:7;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:80%;text-align:center;pointer-events:none}#agmsg.ok{background:#2e9e5b}#agmsg.bad{background:#c0392b}
 .agdrag{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}.agdrag.on{background:#ffd84d;border-color:#e2a400}
 .agghost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-130%);box-shadow:0 4px 14px rgba(0,0,0,.3);background:#fff;opacity:.95}
@@ -273,6 +278,7 @@ body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
       <button class="tab" data-tab="games">Jocs</button>
       <button class="tab" data-tab="places">Els meus llocs</button>
       <button class="tab" data-tab="spain">🇪🇸 Espanya</button>
+      <button class="tab" data-tab="conflicts">⚔️ Conflictes</button>
     </div>
     <div class="hright">
       <div class="search">
@@ -1892,7 +1898,7 @@ const FRX=/[\u{1F1E6}-\u{1F1FF}]{2}/u,FRXS=/([\u{1F1E6}-\u{1F1FF}]{2})/u;
 function swapFlags(root){if(!root||!root.nodeType)return;if(root.nodeType===3)root=root.parentNode;if(!root)return;
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>FRX.test(n.nodeValue)&&n.parentNode&&!n.parentNode.closest("svg,option,textarea,script,style,title,select")?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
   const list=[];while(w.nextNode())list.push(w.currentNode);
-  list.forEach(n=>{const frag=document.createDocumentFragment();n.nodeValue.split(FRXS).forEach(p=>{if(!p)return;if(FRX.test(p)&&p.length===4){const a=[...p].map(ch=>String.fromCharCode(ch.codePointAt(0)-127397)).join("");if(FLURL[a]){const im=document.createElement("img");im.src=FLURL[a];im.className="flg";im.alt=a;im.draggable=false;frag.appendChild(im);return;}}frag.appendChild(document.createTextNode(p));});n.replaceWith(frag);});}
+  list.forEach(n=>{const frag=document.createDocumentFragment();let hit=false;n.nodeValue.split(FRXS).forEach(p=>{if(!p)return;if(FRX.test(p)&&p.length===4){const a=[...p].map(ch=>String.fromCharCode(ch.codePointAt(0)-127397)).join("");if(FLURL[a]){const im=document.createElement("img");im.src=FLURL[a];im.className="flg";im.alt=a;im.draggable=false;frag.appendChild(im);hit=true;return;}}frag.appendChild(document.createTextNode(p));});if(hit)n.replaceWith(frag);});}
 new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData"){if(FRX.test(m.target.nodeValue))swapFlags(m.target);continue;}m.addedNodes.forEach(n=>{if(n.nodeType===1){if(!(n.tagName==="IMG"&&n.classList.contains("flg")))swapFlags(n);}else if(n.nodeType===3&&FRX.test(n.nodeValue))swapFlags(n);});}}).observe(document.body,{childList:true,subtree:true,characterData:true});
 swapFlags(document.body);
 
@@ -2786,6 +2792,362 @@ function agTarget(x,y){if(!AGV.badges)return null;let best=null,bd=30*30;AGV.bad
  const _gm=renderGamesMenu;renderGamesMenu=function(){const r=_gm.apply(this,arguments);try{if(!$("#agcard")){const h=side.querySelector("p.hint");(h||side.querySelector("h2")).insertAdjacentHTML("afterend",card());bind();}}catch(e){}return r;};
  const _ew=renderEsWelcome;renderEsWelcome=function(){const r=_ew.apply(this,arguments);try{if(!$("#agcard")){const b=$("#esvila");if(b){b.closest(".card,.row").insertAdjacentHTML("afterend",card());bind();}}}catch(e){}return r;};
  if(typeof HPAN!=="undefined"){if(HPAN.renderGamesMenu)HPAN.renderGamesMenu=renderGamesMenu;if(HPAN.renderEsWelcome)HPAN.renderEsWelcome=renderEsWelcome;}}
+
+
+// ===== Dades: Conflictes del món (actualitzat nov. 2026) =====
+// r: regió (eu, om, af, as, am) · i: intensitat (3 guerra, 2 alta/mitjana, 1 baixa, 0 tensió o congelat) · s: any d'inici · iso: països implicats
+const CF_NOW=[
+{n:"Guerra de Rússia i Ucraïna",al:["ucraina","russia ucraina","ucrania","guerra d'ucraina","ukraine"],r:"eu",i:3,s:2014,c:[37.6,48.1],iso:["UKR","RUS"],
+ qui:"Rússia contra Ucraïna (amb suport militar i econòmic occidental a Ucraïna).",
+ o:"Després de la revolució de l'Euromaidan (2014), Rússia es va annexionar Crimea i va donar suport a forces separatistes al Donbàs. El 24 de febrer de 2022 Rússia va iniciar una invasió a gran escala. Al darrere hi ha la disputa sobre l'orientació d'Ucraïna cap a la UE i l'OTAN i la visió russa sobre la seua zona d'influència.",
+ e:"És la guerra més gran a Europa des de 1945. El novembre de 2026 hi ha hagut converses entre els EUA, Ucraïna i Rússia a Abu Dhabi, però només s'han acordat intercanvis de presoners. El front avança molt lentament i continuen els atacs amb drons i míssils contra ciutats i infraestructures energètiques."},
+{n:"Conflicte d'Armènia i l'Azerbaidjan",al:["nagorno karabakh","karabakh","armenia azerbaidjan","alt karabakh"],r:"eu",i:0,s:1988,c:[46.75,39.8],iso:["ARM","AZE"],
+ qui:"Armènia i l'Azerbaidjan (disputa per l'Alt Karabakh).",
+ o:"L'Alt Karabakh, de població armènia, estava dins de l'Azerbaidjan soviètic. Amb la dissolució de l'URSS hi hagué una guerra (1988-1994) que va guanyar Armènia. L'Azerbaidjan va recuperar part del territori el 2020 i la totalitat el 2023, i més de 100.000 armenis en van fugir.",
+ e:"L'agost de 2025 els dos països van signar als EUA una declaració de pau. El tractat definitiu està pendent d'una reforma de la Constitució armènia, prevista per al 2027. Ara és una situació de tensió, no de guerra oberta."},
+{n:"Xipre dividida",al:["xipre","chipre","cyprus"],r:"eu",i:0,s:1974,c:[33.4,35.15],iso:["CYP","TUR"],
+ qui:"República de Xipre (grecoxipriota) i la República Turca de Xipre del Nord (reconeguda només per Turquia).",
+ o:"El 1974, després d'un cop d'estat afavorit per Grècia, Turquia va envair el nord de l'illa. Des d'aleshores Xipre està dividida per una línia verda vigilada per l'ONU.",
+ e:"És un conflicte congelat: no hi ha combats, però les negociacions de reunificació estan encallades. Xipre és membre de la UE, però la llei europea no s'aplica al nord."},
+{n:"Kosovo i Sèrbia",al:["kosovo","serbia kosovo"],r:"eu",i:0,s:1998,c:[20.9,42.6],iso:["UNK","SRB"],
+ qui:"Kosovo (majoria albanesa) i Sèrbia.",
+ o:"Kosovo era una província de Sèrbia. La guerra de 1998-1999 va acabar amb bombardejos de l'OTAN i una administració de l'ONU. El 2008 Kosovo es va declarar independent, cosa que Sèrbia (i Espanya) no reconeixen.",
+ e:"Hi ha tensió periòdica al nord de Kosovo, on viu una minoria sèrbia, i la UE fa de mediadora per normalitzar les relacions. Encara hi ha tropes de l'OTAN (KFOR)."},
+{n:"Geòrgia: Abkhàzia i Ossètia del Sud",al:["georgia","abkhazia","osetia del sud","ossetia del sud","ossetia"],r:"eu",i:0,s:1992,c:[43.9,42.4],iso:["GEO"],
+ qui:"Geòrgia contra les regions separatistes d'Abkhàzia i Ossètia del Sud, amb suport de Rússia.",
+ o:"Amb la fi de l'URSS, aquestes dues regions es van separar de Geòrgia després de guerres als anys noranta. El 2008 hi hagué una guerra curta entre Rússia i Geòrgia i, després, Rússia en va reconéixer la independència.",
+ e:"Conflicte congelat: hi ha tropes russes a les dues regions i Geòrgia les considera territori ocupat."},
+{n:"Transnístria (Moldàvia)",al:["transnistria","moldavia","moldova"],r:"eu",i:0,s:1992,c:[29.5,47.1],iso:["MDA"],
+ qui:"Moldàvia i la regió separatista de Transnístria (amb presència militar russa).",
+ o:"El 1992, després de la independència de Moldàvia, la franja oriental de majoria russòfona es va separar després d'una guerra curta.",
+ e:"Congelat: no hi ha combats. Des de 2025 Transnístria pateix una forta crisi energètica perquè ja no rep gas rus a través d'Ucraïna."},
+{n:"Turquia i el PKK",al:["pkk","turquia pkk","kurds","kurdistan","turquia kurds"],r:"eu",i:1,s:1984,c:[43.0,37.6],iso:["TUR"],
+ qui:"L'estat turc contra el Partit dels Treballadors del Kurdistan (PKK).",
+ o:"El PKK va iniciar el 1984 una lluita armada per l'autonomia (al principi, la independència) del poble kurd a Turquia. En quatre dècades hi ha hagut uns 40.000 morts.",
+ e:"El 2025 el PKK va anunciar la seua dissolució i l'entrega d'armes, després d'una crida del seu líder empresonat, Abdullah Öcalan. El procés de pau avança lentament i continua sent fràgil."},
+{n:"Israel i Palestina (Gaza i Cisjordània)",al:["israel palestina","gaza","palestina","israel","cisjordania","franja de gaza"],r:"om",i:3,s:1948,c:[34.45,31.45],iso:["ISR","PSE"],
+ qui:"Israel contra Hamàs i altres grups palestins; a Cisjordània, l'ocupació israeliana i la colonització.",
+ o:"El conflicte ve de la disputa pel mateix territori des de la creació de l'estat d'Israel (1948) i l'ocupació de Gaza i Cisjordània (1967). El 7 d'octubre de 2023 Hamàs va atacar Israel (uns 1.200 morts i 250 ostatges) i Israel va respondre amb una guerra a Gaza que, segons les autoritats de Gaza, ha causat més de 70.000 morts palestins.",
+ e:"Des d'octubre de 2025 hi ha un alto el foc (pla de pau dels EUA) i s'han alliberat tots els ostatges. El novembre de 2026 es va acordar al Caire que Hamàs entregaria armes i túnels en 90 dies, però la reconstrucció i la força internacional encara no han arrancat de debò, i continuen atacs puntuals."},
+{n:"Israel i Hezbol·lah (Líban)",al:["libano","liban","hezbollah","hezbol·lah","hezbolla","israel liban"],r:"om",i:2,s:2023,c:[35.5,33.3],iso:["LBN","ISR"],
+ qui:"Israel contra Hezbol·lah, milícia i partit xiïta libanés aliat de l'Iran.",
+ o:"Hezbol·lah va nàixer el 1982 durant l'ocupació israeliana del sud del Líban. Des d'octubre de 2023 va atacar Israel en solidaritat amb Gaza, i el 2024 Israel va respondre amb una gran ofensiva.",
+ e:"El març de 2026 Israel va envair el sud del Líban i va ocupar prop d'una cinquena part del país. El juny de 2026 es va signar a Washington un acord marc que lliga la retirada israeliana al desarmament de Hezbol·lah, però Hezbol·lah el rebutja i els atacs continuen."},
+{n:"Síria",al:["siria","guerra de siria","syria"],r:"om",i:2,s:2011,c:[38.6,35.3],iso:["SYR"],
+ qui:"El nou govern d'Ahmed al-Sharaa, les forces kurdes (SDF), grups armats locals, l'Estat Islàmic i la intervenció d'Israel i Turquia.",
+ o:"Les protestes de 2011 contra Baixar al-Assad es van convertir en una guerra civil amb mig milió de morts i milions de refugiats. El desembre de 2024 una ofensiva rebel va fer caure Assad.",
+ e:"El 2026 el govern va prendre gran part del nord-est a les forces kurdes i va signar un acord per integrar-les en l'estat; l'agost de 2026 les SDF van anunciar la seua dissolució. Encara hi ha violència contra minories (alauites, drusos) i atacs israelians al sud."},
+{n:"Iemen",al:["iemen","yemen","houthis","huthis","hutis"],r:"om",i:3,s:2014,c:[44.2,15.4],iso:["YEM","SAU"],
+ qui:"Els huthis (grup armat xiïta aliat de l'Iran) contra el govern reconegut i l'Aràbia Saudita.",
+ o:"El 2014 els huthis van ocupar la capital, Sanà. El 2015 una coalició dirigida per l'Aràbia Saudita va intervindre per tornar el govern. La guerra ha provocat una de les pitjors crisis humanitàries del món.",
+ e:"La treva de 2022 es va trencar l'estiu de 2026. Ara hi ha una guerra a gran escala: els huthis ataquen Riad i instal·lacions petrolieres saudites, i el govern ha llançat una ofensiva amb suport saudita."},
+{n:"Guerra de l'Iran amb els EUA i Israel",al:["iran","guerra de l'iran","iran eua","iran israel","ormuz"],r:"om",i:3,s:2026,c:[53.5,32.5],iso:["IRN","ISR"],
+ qui:"L'Iran contra els Estats Units i Israel.",
+ o:"La rivalitat ve de la revolució islàmica de 1979 i del programa nuclear iranià. El juny de 2025 hi hagué una guerra de 12 dies. El 28 de febrer de 2026 els EUA i Israel van atacar l'Iran i van matar el líder suprem Ali Khamenei; el va substituir el seu fill, Mojtaba Khamenei.",
+ e:"Després d'un alto el foc (abril) i un acord a Islamabad (juny), els enfrontaments s'han représ. A la tardor de 2026 l'Iran ataca vaixells a l'estret d'Ormuz i els EUA bombardegen objectius iranians, mentre les dues parts intercanvien propostes de pau."},
+{n:"Iraq",al:["iraq","irak"],r:"om",i:1,s:2003,c:[43.7,33.4],iso:["IRQ"],
+ qui:"El govern iraquià, restes de l'Estat Islàmic i milícies aliades de l'Iran.",
+ o:"Després de la invasió dels EUA (2003) el país va viure una guerra civil i l'auge de l'Estat Islàmic (2014-2017).",
+ e:"La violència és molt menor que fa uns anys. El 2026 la coalició dirigida pels EUA s'ha retirat i les milícies proiranianes són un risc en la guerra regional amb l'Iran."},
+{n:"Líbia",al:["libia","libya"],r:"om",i:1,s:2011,c:[17,27.5],iso:["LBY"],
+ qui:"Govern de Trípoli (oest) i forces del mariscal Haftar (est).",
+ o:"Després de la caiguda de Gaddafi el 2011, el país es va dividir entre governs i milícies rivals, amb intervenció de potències estrangeres.",
+ e:"Hi ha un alto el foc des de 2020, però el país continua dividit i les eleccions s'han ajornat una vegada i una altra. Hi ha enfrontaments puntuals entre milícies a Trípoli."},
+{n:"Sàhara Occidental",al:["sahara occidental","sahara","polisario","sahrauis"],r:"om",i:1,s:1975,c:[-13,24.5],iso:["ESH","MAR"],
+ qui:"El Marroc i el Front Polisari (amb suport d'Algèria).",
+ o:"El 1975 Espanya va abandonar la colònia i el Marroc i Mauritània la van ocupar. El Front Polisari va lluitar per la independència fins a l'alto el foc de 1991, i el referèndum promés per l'ONU no s'ha fet mai. El 2020 es va trencar l'alto el foc.",
+ e:"L'octubre de 2025 l'ONU va prendre el pla d'autonomia marroquí com a base de la negociació. El 2026 hi ha hagut converses a Madrid i Washington amb el Marroc, el Polisari, Algèria i Mauritània. El Polisari accepta parlar de l'autonomia, però no com a única opció."},
+{n:"Guerra del Sudan",al:["sudan","guerra del sudan"],r:"af",i:3,s:2023,c:[29.5,13.8],iso:["SDN"],
+ qui:"L'exèrcit sudanés (SAF) contra les Forces de Suport Ràpid (RSF), milícia paramilitar.",
+ o:"Després de la caiguda del dictador Omar al-Baixir (2019), l'exèrcit i les RSF van compartir el poder, però el 15 d'abril de 2023 van entrar en guerra pel control del país. Hi ha potències estrangeres que donen suport a cada bàndol.",
+ e:"Ha provocat la crisi de desplaçats més gran del món i uns 25 milions de persones passen fam. Les RSF controlen el Darfur (van prendre el-Fasher l'octubre de 2025, amb massacres) i el novembre de 2026 l'exèrcit avança al Kordofan."},
+{n:"Sudan del Sud",al:["sudan del sud","sud sudan","south sudan"],r:"af",i:2,s:2013,c:[31.5,7.5],iso:["SSD"],
+ qui:"El govern de Salva Kiir contra les forces fidels a Riek Machar (SPLA-IO) i milícies.",
+ o:"El país es va independitzar del Sudan el 2011. El 2013 va esclatar una guerra civil entre els seguidors de Kiir i de Machar, amb uns 400.000 morts, fins a l'acord de pau de 2018.",
+ e:"El 2025 Machar va ser detingut i jutjat, i l'acord de pau s'ha trencat a la pràctica. Hi ha combats a Jonglei i l'Alt Nil, i més de la meitat de la població pateix fam."},
+{n:"Etiòpia (Tigrai, Amhara i Oròmia)",al:["etiopia","tigrai","tigray","amhara","oromia"],r:"af",i:3,s:2020,c:[38.9,12.4],iso:["ETH","ERI"],
+ qui:"El govern d'Abiy Ahmed contra el TPLF (Tigrai), les milícies Fano (Amhara) i l'OLA (Oròmia); tensió amb Eritrea.",
+ o:"La guerra del Tigrai (2020-2022) va causar centenars de milers de morts. Després van començar insurgències a Amhara i Oròmia per motius territorials i polítics.",
+ e:"El setembre de 2026 el TPLF i altres grups van llançar una ofensiva per enderrocar el govern; Etiòpia acusa Eritrea de donar-los suport i les relacions s'han trencat. L'exèrcit ha recuperat l'aeroport de Mekelle, però hi ha risc de guerra regional."},
+{n:"Somàlia",al:["somalia","al shabaab","al-shabaab"],r:"af",i:2,s:2006,c:[45.3,3.5],iso:["SOM"],
+ qui:"El govern federal i una força de la Unió Africana contra el grup gihadista al-Xabab.",
+ o:"Somàlia no té un estat fort des de 1991. Al-Xabab, vinculat a al-Qaida, lluita des de 2006 per imposar un estat islàmic.",
+ e:"Al-Xabab controla zones rurals del centre i el sud i fa atemptats a Mogadiscio. La missió africana té pocs diners i els EUA deixaran de finançar-la a partir de desembre de 2026."},
+{n:"Est de la República Democràtica del Congo",al:["congo","rd congo","rdc","m23","kivu","republica democratica del congo"],r:"af",i:3,s:1998,c:[29.0,-1.6],iso:["COD","RWA"],
+ qui:"L'exèrcit congolés contra el grup M23 (amb suport de Ruanda, segons l'ONU) i desenes d'altres milícies.",
+ o:"Les arrels són el genocidi de Ruanda (1994) i les guerres del Congo (1996-2003). L'est del país és molt ric en minerals (coltan, or, cobalt). El 2025 l'M23 va prendre Goma i Bukavu.",
+ e:"Hi ha dos processos de pau, a Washington i Doha, però la violència continua. L'octubre de 2026 l'M23 i els seus aliats van formar una nova coalició dirigida per l'expresident Joseph Kabila. Hi ha més de 7 milions de desplaçats."},
+{n:"Sahel central (Mali, Burkina Faso i Níger)",al:["sahel","mali","burkina faso","niger","jnim"],r:"af",i:3,s:2012,c:[-1.5,14.5],iso:["MLI","BFA","NER"],
+ qui:"Juntes militars (amb suport de Rússia) contra grups gihadistes (JNIM, Estat Islàmic) i rebels tuaregs.",
+ o:"El 2012 una rebel·lió tuareg i gihadista va ocupar el nord de Mali. La violència es va estendre a Burkina Faso i el Níger, on entre 2020 i 2023 hi hagué cops d'estat militars que van expulsar França.",
+ e:"L'abril de 2026 una ofensiva del JNIM i dels rebels tuaregs va matar el ministre de Defensa de Mali, va prendre Kidal i va bloquejar Bamako. L'octubre de 2026 l'exèrcit malià, amb mercenaris russos, va recuperar Kidal, però els gihadistes controlen grans zones rurals."},
+{n:"Conca del llac Txad (Boko Haram)",al:["boko haram","llac txad","lago chad","iswap"],r:"af",i:2,s:2009,c:[13.6,12.6],iso:["NGA","NER","TCD","CMR"],
+ qui:"Els exèrcits de Nigèria, el Níger, el Txad i el Camerun contra Boko Haram i l'Estat Islàmic a l'Àfrica Occidental (ISWAP).",
+ o:"Boko Haram va començar una insurrecció gihadista el 2009 al nord-est de Nigèria. Es va fer famós pel segrest de 276 alumnes a Chibok (2014).",
+ e:"Els atacs contra militars i civils continuen. El 2026 els EUA han enviat assessors militars a Nigèria."},
+{n:"Nigèria: bandolers i violència comunitària",al:["nigeria","bandolers nigeria"],r:"af",i:2,s:2011,c:[6.5,11.2],iso:["NGA"],
+ qui:"Bandes armades, grups d'autodefensa i conflictes entre pastors i agricultors al nord-oest i centre de Nigèria.",
+ o:"La competència per la terra i l'aigua, agreujada pel canvi climàtic, i la debilitat de l'estat han fet créixer els segrestos massius i les massacres.",
+ e:"Hi ha milers de morts cada any. Els segrestos d'escolars i viatgers són freqüents."},
+{n:"Camerun anglòfon (Ambazònia)",al:["camerun","ambazonia","cameroon"],r:"af",i:1,s:2017,c:[9.8,5.7],iso:["CMR"],
+ qui:"El govern del Camerun contra separatistes de les regions de parla anglesa.",
+ o:"Les regions anglòfones se senten discriminades per la majoria francòfona. Les protestes de 2016 es van convertir en lluita armada el 2017.",
+ e:"Continua amb intensitat baixa o mitjana i milers de desplaçats."},
+{n:"República Centreafricana",al:["centreafrica","republica centreafricana","rca"],r:"af",i:1,s:2013,c:[20.9,6.6],iso:["CAF"],
+ qui:"El govern (amb mercenaris russos) contra diversos grups armats.",
+ o:"El 2013 la coalició rebel Séléka va prendre el poder i es va iniciar una guerra amb components religiosos.",
+ e:"La violència ha baixat, però grups armats controlen zones del país."},
+{n:"Moçambic (Cabo Delgado)",al:["mocambic","mozambique","cabo delgado"],r:"af",i:2,s:2017,c:[40.2,-12.3],iso:["MOZ"],
+ qui:"El govern de Moçambic (amb tropes de Ruanda) contra un grup afiliat a l'Estat Islàmic.",
+ o:"La insurgència va començar el 2017 a Cabo Delgado, una província pobra on s'han descobert grans reserves de gas.",
+ e:"Continuen els atacs a pobles i carreteres i hi ha centenars de milers de desplaçats."},
+{n:"Afganistan i Pakistan",al:["afganistan pakistan","afganistan","pakistan afganistan","talibans"],r:"as",i:3,s:2025,c:[70.6,34.2],iso:["AFG","PAK"],
+ qui:"Pakistan contra el govern talibà de l'Afganistan; el Pakistan l'acusa d'amagar els talibans pakistanesos (TTP).",
+ o:"Els talibans van tornar al poder a l'Afganistan el 2021. Des d'aleshores han augmentat els atacs del TTP al Pakistan, que considera que actuen des de l'Afganistan.",
+ e:"L'octubre de 2025 hi hagué combats a la frontera i el 27 de febrer de 2026 el Pakistan va bombardejar Kabul i va declarar una «guerra oberta». La frontera continua molt tensa."},
+{n:"Balutxistan (Pakistan)",al:["balutxistan","baluchistan","bla"],r:"as",i:2,s:2004,c:[65.5,28.3],iso:["PAK"],
+ qui:"L'estat pakistanés contra grups separatistes balutxis (com l'Exèrcit d'Alliberament del Balutxistan, BLA).",
+ o:"Els balutxis denuncien que el Pakistan explota els recursos de la regió sense beneficiar-los. La insurgència actual va començar cap al 2004.",
+ e:"Els atacs contra soldats, trens i treballadors xinesos han augmentat en els darrers anys."},
+{n:"Caixmir (Índia i Pakistan)",al:["caixmir","cachemira","kashmir"],r:"as",i:1,s:1947,c:[75.3,34.1],iso:["IND","PAK"],
+ qui:"L'Índia i el Pakistan, que es disputen la regió, i grups armats separatistes.",
+ o:"Des de la partició de l'Índia britànica (1947) els dos països s'han enfrontat en diverses guerres pel Caixmir. Tots dos tenen armes nuclears.",
+ e:"Després d'un atemptat a Pahalgam (abril de 2025) hi hagué uns dies d'atacs militars entre els dos països el maig de 2025. Ara hi ha alto el foc, però l'Índia manté suspés el tractat de les aigües de l'Indus."},
+{n:"Índia: insurgència naxalita",al:["naxalites","naxalita","maoistes","india maoistes"],r:"as",i:1,s:1967,c:[81.4,19.0],iso:["IND"],
+ qui:"L'estat indi contra guerrilles maoistes (naxalites).",
+ o:"Va començar el 1967 al poble de Naxalbari amb una revolta camperola i s'estengué per zones tribals i pobres del centre i l'est del país. Ha causat unes 17.000 morts.",
+ e:"El govern es va fixar el 31 de març de 2026 per acabar-la. La insurgència és ara molt reduïda, encara que l'exèrcit continua desplegat a les zones afectades."},
+{n:"Myanmar",al:["myanmar","birmania","burma"],r:"as",i:3,s:2021,c:[96,21.5],iso:["MMR"],
+ qui:"La junta militar contra la resistència democràtica i guerrilles de minories ètniques.",
+ o:"Myanmar viu conflictes ètnics des de la independència (1948). El cop d'estat militar de febrer de 2021 va provocar una guerra civil a tot el país. El 2017 l'exèrcit va expulsar uns 700.000 rohingyes.",
+ e:"La guerra ha causat més de 100.000 morts i més de 5 milions de desplaçats. El general Min Aung Hlaing s'ha fet nomenar president el 2026 després d'unes eleccions sense garanties, mentre la resistència controla gran part del territori."},
+{n:"Tailàndia i Cambodja",al:["tailandia cambodja","cambodja","tailandia","camboya"],r:"as",i:1,s:2025,c:[103.6,14.4],iso:["THA","KHM"],
+ qui:"Tailàndia i Cambodja, per la frontera.",
+ o:"La frontera de 817 km la va dibuixar França el 1907 i hi ha zones i temples antics que reclamen tots dos països. El juliol de 2025 hi hagué cinc dies de combats i el desembre de 2025, uns altres.",
+ e:"Hi ha una treva des de finals de 2025, però hi ha incidents i acusacions mútues i la frontera continua militaritzada."},
+{n:"Sud de Tailàndia (Patani)",al:["patani","sud de tailandia"],r:"as",i:1,s:2004,c:[101.3,6.4],iso:["THA"],
+ qui:"L'estat tailandés contra insurgents malais musulmans.",
+ o:"Les províncies del sud, de majoria malaia i musulmana, reclamen més autonomia. La insurgència es va reactivar el 2004.",
+ e:"Intensitat baixa, amb atemptats esporàdics i converses de pau intermitents."},
+{n:"Filipines (Mindanao i NPA)",al:["filipines","mindanao","filipinas"],r:"as",i:1,s:1969,c:[124.5,7.5],iso:["PHL"],
+ qui:"El govern contra la guerrilla comunista NPA i grups gihadistes de Mindanao.",
+ o:"La guerrilla comunista lluita des de 1969. Al sud, el conflicte moro va acabar amb l'autonomia de Bangsamoro (2019), però queden grups armats.",
+ e:"La violència ha baixat molt i les dues insurgències estan debilitades."},
+{n:"Papua Occidental",al:["papua","papua occidental"],r:"as",i:1,s:1963,c:[138.5,-4.0],iso:["IDN"],
+ qui:"Indonèsia contra independentistes papús.",
+ o:"Indonèsia va prendre el control de la meitat occidental de Nova Guinea el 1963 i el 1969 va fer una consulta molt qüestionada.",
+ e:"Continua amb enfrontaments armats de baixa intensitat."},
+{n:"Taiwan",al:["taiwan","xina taiwan"],r:"as",i:0,s:1949,c:[121,23.7],iso:["TWN","CHN"],
+ qui:"La República Popular de la Xina i Taiwan (República de la Xina); els EUA donen suport a Taiwan.",
+ o:"El 1949 els nacionalistes van perdre la guerra civil xinesa i es van refugiar a Taiwan. Pequín considera l'illa una província que s'ha de reunificar, si cal per la força.",
+ e:"No hi ha guerra, però la Xina fa maniobres militars al voltant de l'illa i la tensió amb els EUA és alta."},
+{n:"Península de Corea",al:["corea","corea del nord","coreas"],r:"as",i:0,s:1950,c:[127.6,38.4],iso:["PRK","KOR"],
+ qui:"Corea del Nord i Corea del Sud (aliada dels EUA).",
+ o:"La guerra de Corea (1950-1953) va acabar amb un armistici, no amb un tractat de pau, i la península continua dividida pel paral·lel 38.",
+ e:"Corea del Nord continua desenvolupant armes nuclears i míssils i té una aliança militar amb Rússia, a la qual ha enviat soldats."},
+{n:"Mar de la Xina Meridional",al:["mar de la xina","mar de la xina meridional","mar de china"],r:"as",i:0,s:1974,c:[114,12],iso:["CHN","PHL","VNM"],
+ qui:"La Xina contra les Filipines, el Vietnam, Malàisia i altres països de la zona.",
+ o:"La Xina reclama gairebé tot aquest mar, ric en pesca i rutes comercials, i hi ha construït illes artificials amb bases militars. El 2016 un tribunal internacional li va negar la raó.",
+ e:"Hi ha xocs freqüents entre vaixells xinesos i filipins, amb canons d'aigua i abordatges."},
+{n:"Colòmbia",al:["colombia","eln","farc"],r:"am",i:2,s:1964,c:[-74.5,6.5],iso:["COL"],
+ qui:"L'estat colombià contra l'ELN, dissidències de les FARC i el Clan del Golf, que viuen del narcotràfic i la mineria il·legal.",
+ o:"El conflicte armat va començar el 1964. L'acord de pau de 2016 va desarmar les FARC, però altres grups van ocupar els seus territoris.",
+ e:"La «pau total» del president Petro no va funcionar. El nou president, Abelardo de la Espriella (des d'agost de 2026), va donar per acabades totes les negociacions el setembre de 2026 i aposta per l'ofensiva militar."},
+{n:"Haití",al:["haiti"],r:"am",i:3,s:2021,c:[-72.3,18.6],iso:["HTI"],
+ qui:"Bandes armades (com Viv Ansanm) contra la policia, una força internacional i grups d'autodefensa.",
+ o:"Després de l'assassinat del president Jovenel Moïse (2021), l'estat es va enfonsar i les bandes van ocupar la capital.",
+ e:"Les bandes controlen entre el 80 i el 90% de Port-au-Prince, hi ha més d'1,4 milions de desplaçats i milers de morts cada any. Una força de l'ONU contra les bandes actua des d'abril de 2026, i les eleccions s'han ajornat fins al juliol de 2027."},
+{n:"Mèxic: guerra contra els càrtels",al:["mexic","mexico","carteles","cartels"],r:"am",i:2,s:2006,c:[-103,24.6],iso:["MEX"],
+ qui:"L'estat mexicà contra càrtels del narcotràfic (Sinaloa, Jalisco Nova Generació…) que també lluiten entre ells.",
+ o:"El 2006 el president Calderón va enviar l'exèrcit contra els càrtels. Des d'aleshores hi ha hagut centenars de milers de morts i desapareguts.",
+ e:"La violència continua molt alta. Els EUA consideren alguns càrtels grups terroristes i pressionen el govern de Claudia Sheinbaum."},
+{n:"Veneçuela",al:["venecuela","veneçuela","venezuela"],r:"am",i:1,s:2026,c:[-66.6,8.0],iso:["VEN"],
+ qui:"Veneçuela i els Estats Units.",
+ o:"Després d'anys de crisi política i econòmica i eleccions qüestionades, els EUA van atacar vaixells que acusaven de narcotràfic (2025) i el gener de 2026 forces nord-americanes van capturar el president Nicolás Maduro.",
+ e:"Delcy Rodríguez governa en funcions sota una forta pressió dels EUA, i el futur polític del país és incert."},
+{n:"Equador: crim organitzat",al:["equador","ecuador"],r:"am",i:2,s:2024,c:[-79.9,-1.8],iso:["ECU"],
+ qui:"L'estat equatorià contra bandes del narcotràfic.",
+ o:"L'Equador s'ha convertit en una ruta clau de la cocaïna. El gener de 2024 el govern va declarar un «conflicte armat intern» després d'un assalt a una televisió en directe.",
+ e:"La taxa d'homicidis continua entre les més altes d'Amèrica Llatina i l'exèrcit patrulla carrers i presons."}
+];
+// Històric: s/f any d'inici i final (negatiu = aC) · du: durada escrita si cal · m: morts aproximades
+const CF_HIST=[
+{n:"Guerres Mèdiques",al:["mediques","guerres mediques"],s:-499,f:-449,c:[23.9,38.15],p:"ant",qui:"Ciutats gregues (Atenes, Esparta…) contra l'Imperi persa.",d:"Els perses volien dominar Grècia després de la revolta de les ciutats gregues de Jònia. Les victòries gregues a Marató (490 aC) i Salamina (480 aC) van frenar Pèrsia i van obrir l'època d'esplendor d'Atenes."},
+{n:"Guerra del Peloponès",al:["peloponès","peloponeso"],s:-431,f:-404,c:[22.4,37.1],p:"ant",qui:"Atenes i la Lliga de Delos contra Esparta i la Lliga del Peloponès.",d:"Les dues grans potències gregues van lluitar per l'hegemonia. Va guanyar Esparta i Atenes va perdre el seu imperi marítim."},
+{n:"Conquestes d'Alexandre el Gran",al:["alexandre","alexandre el gran","alejandro magno"],s:-334,f:-323,c:[43.3,36.4],p:"ant",qui:"Macedònia i les ciutats gregues contra l'Imperi persa i altres pobles.",d:"Alexandre va conquerir l'Imperi persa fins a l'Índia en només onze anys. En morir, l'imperi es va dividir, però va estendre la cultura grega (període hel·lenístic)."},
+{n:"Guerres dels Regnes Combatents",al:["regnes combatents","estats combatents"],s:-475,f:-221,c:[112.5,34.6],p:"ant",qui:"Set regnes xinesos.",d:"Dos segles i mig de guerres entre regnes xinesos. Les va acabar el regne de Qin, que va unificar la Xina sota el primer emperador, Qin Shi Huang."},
+{n:"Guerres Púniques",al:["puniques","punicas"],s:-264,f:-146,c:[10.3,36.85],p:"ant",qui:"Roma contra Cartago.",d:"Tres guerres pel control de la Mediterrània occidental, amb Hispània com a escenari clau (Anníbal va eixir de Cartagena i va atacar Sagunt). Roma va destruir Cartago el 146 aC."},
+{n:"Guerra de les Gàl·lies",al:["galies","gal·lies","galias"],s:-58,f:-50,c:[4.5,47.5],p:"ant",qui:"Roma (Juli Cèsar) contra els pobles gals.",d:"Cèsar va conquerir la Gàl·lia (l'actual França i Bèlgica). La victòria d'Alèsia (52 aC) sobre Vercingetòrix li va donar el poder per a convertir-se en dictador de Roma."},
+{n:"Reconquesta",al:["reconquesta","reconquista"],s:722,f:1492,c:[-4.2,39.6],p:"med",qui:"Regnes cristians de la península Ibèrica contra al-Àndalus.",d:"Després de la conquesta musulmana (711), els regnes cristians del nord van anar avançant cap al sud durant gairebé vuit segles. Jaume I va conquerir València el 1238 i els Reis Catòlics van prendre Granada el 1492."},
+{n:"Croades",al:["croades","cruzadas"],s:1096,f:1291,c:[35.1,32.9],p:"med",qui:"Regnes cristians d'Europa contra estats musulmans del Pròxim Orient.",d:"Expedicions militars convocades pel papa per conquerir Jerusalem i Terra Santa. Van acabar amb la caiguda d'Acre (1291), però van incrementar el comerç i el contacte entre cultures."},
+{n:"Conquestes mongoles",al:["mongols","conquestes mongoles","genguis khan"],s:1206,f:1294,c:[103,47.5],p:"med",qui:"L'Imperi mongol contra la Xina, Pèrsia, Rússia, l'Europa de l'Est i altres.",d:"Genguis Khan i els seus successors van crear l'imperi terrestre continu més gran de la història. Les conquestes van causar milions de morts però van connectar Àsia i Europa (Ruta de la Seda)."},
+{n:"Guerra dels Cent Anys",al:["cent anys","cien anos","guerra dels cent anys"],s:1337,f:1453,c:[1.0,47.6],p:"med",qui:"Regne d'Anglaterra contra Regne de França.",d:"Va començar per la reclamació anglesa del tron francés. Amb treves, va durar 116 anys. Joana d'Arc va ajudar a girar la guerra i França va expulsar els anglesos del continent."},
+{n:"Conquesta de l'Imperi asteca",al:["asteques","aztecas","conquesta de mexic"],s:1519,f:1521,c:[-99.1,19.4],p:"mod",qui:"Castella (Hernán Cortés) i aliats indígenes contra l'Imperi mexica.",d:"Cortés, amb pocs soldats espanyols però milers d'aliats indígenes, va prendre Tenochtitlan el 1521. Les epidèmies van matar gran part de la població."},
+{n:"Conquesta de l'Imperi inca",al:["inques","incas","conquesta del peru"],s:1532,f:1572,c:[-72.0,-13.5],p:"mod",qui:"Castella (Francisco Pizarro) contra l'Imperi inca.",d:"Pizarro va capturar l'emperador Atahualpa el 1532. La resistència inca va continuar a Vilcabamba fins a l'execució de Túpac Amaru el 1572."},
+{n:"Guerra dels Vuitanta Anys",al:["vuitanta anys","ochenta anos","flandes"],s:1568,f:1648,c:[5.0,52.0],p:"mod",qui:"Les Províncies Unides (Països Baixos) contra la Monarquia Hispànica.",d:"Rebel·lió de les províncies del nord, majoritàriament protestants, contra Felip II. Va acabar amb el reconeixement de la independència de les Províncies Unides a la Pau de Westfàlia."},
+{n:"Guerra dels Trenta Anys",al:["trenta anys","treinta anos"],s:1618,f:1648,c:[11.5,50.5],p:"mod",qui:"Estats catòlics (Habsburg, Espanya) contra estats protestants (Suècia, prínceps alemanys) i França.",d:"Va començar com una guerra religiosa al Sacre Imperi i es va convertir en una lluita per l'hegemonia europea. Va devastar Alemanya i va acabar amb la Pau de Westfàlia, base del sistema d'estats moderns.",m:"entre 4 i 8 milions"},
+{n:"Guerra dels Segadors",al:["segadors","guerra dels segadors"],s:1640,f:1652,c:[2.0,41.7],p:"mod",qui:"Catalunya (amb suport de França) contra la Monarquia Hispànica.",d:"Revolta catalana contra les tropes reials i la política del comte-duc d'Olivares (Corpus de Sang, 1640). Barcelona va capitular el 1652 i el 1659 el Rosselló va passar a França."},
+{n:"Guerra Civil anglesa",al:["guerra civil anglesa","revolucio anglesa"],s:1642,f:1651,c:[-1.5,52.4],p:"mod",qui:"El rei Carles I contra el Parlament (Oliver Cromwell).",d:"Va guanyar el Parlament, el rei va ser executat (1649) i Anglaterra va ser una república uns anys. Va reforçar el poder del Parlament enfront del rei."},
+{n:"Guerra de Successió Espanyola",al:["successio","sucesion","guerra de successio"],s:1701,f:1714,c:[-1.1,38.9],p:"mod",qui:"Felip de Borbó (amb França) contra l'arxiduc Carles d'Àustria (amb Anglaterra, Holanda i la Corona d'Aragó).",d:"Guerra pel tron espanyol després de la mort de Carles II sense fills. Felip V va guanyar: després de la batalla d'Almansa (1707) va abolir els Furs de València i, el 1714, va prendre Barcelona. Els Decrets de Nova Planta van eliminar les institucions pròpies de la Corona d'Aragó."},
+{n:"Guerra dels Set Anys",al:["set anys","siete anos"],s:1756,f:1763,c:[13.0,51.0],p:"mod",qui:"Gran Bretanya i Prússia contra França, Àustria, Rússia i Espanya.",d:"Considerada la primera guerra mundial perquè es va lluitar a Europa, Amèrica, Àsia i els mars. La Gran Bretanya en va eixir com la principal potència colonial."},
+{n:"Guerra d'Independència dels Estats Units",al:["independencia dels estats units","independencia eua","revolucio americana"],s:1775,f:1783,c:[-75.0,40.0],p:"mod",qui:"Les Tretze Colònies (amb França i Espanya) contra la Gran Bretanya.",d:"Les colònies britàniques d'Amèrica del Nord es van rebel·lar contra els impostos sense representació. El 1776 van declarar la independència i el 1783 la Gran Bretanya la va reconéixer."},
+{n:"Guerres Napoleòniques",al:["napoleoniques","napoleonicas","napoleo"],s:1803,f:1815,c:[16.8,49.1],p:"cont",qui:"La França de Napoleó contra coalicions de la Gran Bretanya, Àustria, Prússia, Rússia, Espanya…",d:"Napoleó va dominar gran part d'Europa i va estendre idees de la Revolució Francesa. Va ser derrotat definitivament a Waterloo (1815) i el Congrés de Viena va refer el mapa europeu.",m:"entre 3,5 i 6 milions"},
+{n:"Guerra del Francès",al:["guerra del frances","guerra de la independencia","independencia espanyola"],s:1808,f:1814,c:[-0.9,41.65],p:"cont",qui:"Espanya, Portugal i la Gran Bretanya contra la França napoleònica.",d:"Napoleó va imposar el seu germà Josep com a rei d'Espanya i va esclatar una revolta popular (2 de maig de 1808). Durant la guerra es va aprovar la Constitució de Cadis (1812)."},
+{n:"Guerres d'independència hispanoamericanes",al:["independencies hispanoamericanes","independencia d'america","bolivar"],s:1809,f:1826,c:[-70.0,0.0],p:"cont",qui:"Moviments independentistes (Bolívar, San Martín…) contra la Monarquia Hispànica.",d:"Aprofitant la crisi d'Espanya per la invasió napoleònica, les colònies americanes es van independitzar. La batalla d'Ayacucho (1824) va ser decisiva. Només Cuba i Puerto Rico van continuar sent espanyoles."},
+{n:"Guerres Carlines",al:["carlines","carlistes","guerres carlines"],s:1833,f:1876,c:[-1.8,42.8],p:"cont",qui:"Carlistes (partidaris de Carles Maria Isidre i l'absolutisme) contra liberals (Isabel II).",d:"Tres guerres civils pel tron i el model d'estat. Els carlistes defenien la tradició, la religió i els furs. Molt fortes al País Basc, Navarra, Catalunya i el Maestrat."},
+{n:"Guerres de l'Opi",al:["opi","opio"],s:1839,f:1860,c:[113.3,23.1],p:"cont",qui:"La Gran Bretanya (i França en la segona) contra la Xina.",d:"La Xina volia prohibir el comerç d'opi que feien els britànics. Va perdre i va haver de cedir Hong Kong i obrir ports al comerç estranger: començava el «segle d'humiliació» xinés."},
+{n:"Guerra de Crimea",al:["crimea"],s:1853,f:1856,c:[33.5,44.6],p:"cont",qui:"Rússia contra l'Imperi otomà, la Gran Bretanya, França i el Piemont.",d:"Lluita per influència sobre l'Imperi otomà en decadència. Va ser una de les primeres guerres amb fotografia i telègraf, i Florence Nightingale va revolucionar la infermeria."},
+{n:"Guerra de Secessió dels Estats Units",al:["secessio","secesion","guerra civil americana"],s:1861,f:1865,c:[-78.5,38.0],p:"cont",qui:"La Unió (estats del nord) contra la Confederació (estats esclavistes del sud).",d:"Els estats del sud es van separar per defendre l'esclavitud. Va guanyar el nord i es va abolir l'esclavitud.",m:"uns 620.000-750.000"},
+{n:"Guerra Francoprussiana",al:["francoprussiana","franco prussiana"],s:1870,f:1871,du:"10 mesos",c:[6.2,49.1],p:"cont",qui:"Prússia i els estats alemanys contra França.",d:"Prússia va derrotar ràpidament França. El 1871 es va proclamar l'Imperi alemany a Versalles i França va perdre Alsàcia i Lorena."},
+{n:"Guerra de Cuba",al:["cuba","guerra de cuba","hispanoamericana","desastre del 98"],s:1895,f:1898,c:[-79.5,22.0],p:"cont",qui:"Independentistes cubans (i els EUA el 1898) contra Espanya.",d:"Els cubans es van alçar per la independència. El 1898 els EUA hi van entrar i Espanya va perdre Cuba, Puerto Rico i les Filipines («el Desastre del 98»)."},
+{n:"Guerra Russojaponesa",al:["russojaponesa","ruso japonesa"],s:1904,f:1905,du:"un any i mig",c:[121.3,38.8],p:"cont",qui:"L'Imperi rus contra el Japó.",d:"Lluita per Manxúria i Corea. La victòria japonesa va ser la primera d'un país asiàtic sobre una potència europea moderna."},
+{n:"Primera Guerra Mundial",al:["primera guerra mundial","gran guerra","1a guerra mundial","i guerra mundial"],s:1914,f:1918,c:[3.0,49.9],p:"cont",qui:"Aliats (França, Regne Unit, Rússia, Itàlia, EUA…) contra els Imperis Centrals (Alemanya, Àustria-Hongria, Imperi otomà, Bulgària).",d:"L'assassinat de l'hereu austríac a Sarajevo va activar el sistema d'aliances. Va ser una guerra de trinxeres molt mortífera. Van caure quatre imperis i el Tractat de Versalles va castigar Alemanya.",m:"uns 15-20 milions"},
+{n:"Guerra Civil russa",al:["guerra civil russa","revolucio russa"],s:1917,f:1922,c:[44.5,55.5],p:"cont",qui:"Bolxevics (Exèrcit Roig) contra l'Exèrcit Blanc i potències estrangeres.",d:"Després de la Revolució d'Octubre de 1917, els bolxevics van guanyar la guerra i el 1922 van fundar la Unió Soviètica."},
+{n:"Guerra del Rif",al:["rif","guerra del marroc","annual"],s:1921,f:1927,c:[-3.9,35.2],p:"cont",qui:"Espanya i França contra les tribus rifenyes d'Abd el-Krim.",d:"El desastre d'Annual (1921) va ser una gran derrota espanyola i una de les causes de la dictadura de Primo de Rivera. El desembarcament d'Alhucemes (1925) va donar la victòria a Espanya i França."},
+{n:"Guerra Civil xinesa",al:["guerra civil xinesa"],s:1927,f:1949,c:[116.4,39.9],p:"cont",qui:"Nacionalistes del Kuomintang contra comunistes de Mao Zedong.",d:"Amb una pausa per la invasió japonesa, va acabar amb la victòria comunista i la proclamació de la República Popular de la Xina (1949). Els nacionalistes es van retirar a Taiwan."},
+{n:"Guerra Civil espanyola",al:["guerra civil espanyola","guerra civil"],s:1936,f:1939,c:[-3.7,40.4],p:"cont",qui:"El bàndol republicà contra el bàndol sublevat (Franco), amb ajuda de l'Alemanya nazi i la Itàlia feixista.",d:"El cop d'estat militar de juliol de 1936 contra la Segona República va provocar la guerra. València va ser capital de la República (1936-1937). La victòria de Franco va donar pas a una dictadura fins al 1975.",m:"uns 500.000"},
+{n:"Segona Guerra Sino-japonesa",al:["sinojaponesa","sino japonesa"],s:1937,f:1945,c:[118.8,32.05],p:"cont",qui:"La Xina contra l'Imperi del Japó.",d:"El Japó va envair la Xina i va cometre massacres com la de Nanquín (1937). Es va integrar en la Segona Guerra Mundial i va acabar amb la derrota japonesa."},
+{n:"Segona Guerra Mundial",al:["segona guerra mundial","2a guerra mundial","ii guerra mundial"],s:1939,f:1945,c:[19.5,52.2],p:"cont",qui:"Aliats (Regne Unit, URSS, EUA, Xina, França…) contra l'Eix (Alemanya, Itàlia, Japó).",d:"Va començar amb la invasió alemanya de Polònia. És la guerra més mortífera de la història i inclou l'Holocaust (6 milions de jueus assassinats) i les bombes atòmiques d'Hiroshima i Nagasaki. Després es va crear l'ONU.",m:"uns 70-85 milions"},
+{n:"Guerra araboisraeliana de 1948",al:["araboisraeliana","1948","guerra de 1948","nakba"],s:1948,f:1949,du:"uns 10 mesos",c:[34.9,31.6],p:"cont",qui:"Israel contra Egipte, Jordània, Síria, l'Iraq i el Líban.",d:"Després de la creació de l'estat d'Israel, els països àrabs veïns el van atacar. Israel va guanyar i uns 700.000 palestins van haver de fugir o van ser expulsats (la Nakba)."},
+{n:"Guerra Freda",al:["guerra freda","guerra fria"],s:1947,f:1991,c:[13.4,52.5],p:"cont",qui:"Els EUA i el bloc occidental (OTAN) contra l'URSS i el bloc comunista (Pacte de Varsòvia).",d:"Enfrontament polític, econòmic i ideològic sense guerra directa entre les dues superpotències, però amb carrera nuclear i guerres indirectes (Corea, Vietnam, Afganistan…). Va acabar amb la caiguda del Mur de Berlín (1989) i la dissolució de l'URSS (1991)."},
+{n:"Guerra de Corea",al:["corea","guerra de corea"],s:1950,f:1953,c:[127.0,38.3],p:"cont",qui:"Corea del Nord i la Xina (amb suport soviètic) contra Corea del Sud, els EUA i forces de l'ONU.",d:"Corea del Nord va envair el Sud. Després de tres anys, el front va quedar on havia començat, al paral·lel 38. Només es va signar un armistici: tècnicament la guerra no ha acabat.",m:"uns 2,5-3 milions"},
+{n:"Guerra d'Algèria",al:["algeria","guerra d'algeria"],s:1954,f:1962,c:[3.0,36.4],p:"cont",qui:"El Front d'Alliberament Nacional (FLN) contra França.",d:"Guerra d'independència contra la colonització francesa, amb tortures i atemptats. Algèria es va independitzar el 1962 i prop d'un milió de colons francesos van marxar."},
+{n:"Guerra del Vietnam",al:["vietnam","guerra del vietnam"],s:1955,f:1975,c:[106.6,16.2],p:"cont",qui:"Vietnam del Nord i el Vietcong contra Vietnam del Sud i els EUA.",d:"Conflicte de la Guerra Freda per la unificació del Vietnam. Els EUA hi van enviar més de mig milió de soldats, però es van retirar el 1973. El 1975 el nord va prendre Saigon i va unificar el país.",m:"entre 1,3 i 3 milions"},
+{n:"Guerra dels Sis Dies",al:["sis dies","seis dias"],s:1967,f:1967,du:"6 dies",c:[33.8,30.2],p:"cont",qui:"Israel contra Egipte, Síria i Jordània.",d:"En només sis dies Israel va ocupar Gaza i el Sinaí (Egipte), Cisjordània i Jerusalem Est (Jordània) i els alts del Golan (Síria). Encara condiciona el conflicte araboisraelià actual."},
+{n:"Guerra soviètica de l'Afganistan",al:["afganistan sovietica","guerra sovietica","afganistan urss"],s:1979,f:1989,c:[69.2,34.6],p:"cont",qui:"L'URSS i el govern comunista afganés contra els mujahidins (amb suport dels EUA, el Pakistan i l'Aràbia Saudita).",d:"L'URSS va invadir l'Afganistan per sostenir un govern aliat. Després de deu anys es va retirar derrotada, cosa que va contribuir a la seua caiguda."},
+{n:"Guerra de l'Iran i l'Iraq",al:["iran iraq","iran-iraq"],s:1980,f:1988,c:[47.8,31.0],p:"cont",qui:"L'Iraq de Saddam Hussein contra l'Iran.",d:"L'Iraq va atacar l'Iran després de la revolució islàmica per disputes frontereres. Va ser una guerra de trinxeres i armes químiques que va acabar sense guanyador.",m:"entre 500.000 i 1 milió"},
+{n:"Guerra de les Malvines",al:["malvines","malvinas","falklands"],s:1982,f:1982,du:"74 dies",c:[-59.0,-51.7],p:"cont",qui:"L'Argentina contra el Regne Unit.",d:"La dictadura argentina va ocupar les illes Malvines, britàniques des de 1833. El Regne Unit les va recuperar i la derrota va accelerar la caiguda de la dictadura argentina."},
+{n:"Guerra del Golf",al:["guerra del golf","kuwait","golf persic"],s:1990,f:1991,du:"7 mesos",c:[47.9,29.4],p:"cont",qui:"Una coalició internacional dirigida pels EUA contra l'Iraq.",d:"L'Iraq va envair Kuwait l'agost de 1990. L'ONU va autoritzar una coalició que, amb l'operació Tempesta del Desert (gener-febrer de 1991), va expulsar l'exèrcit iraquià."},
+{n:"Guerres de Iugoslàvia",al:["iugoslavia","yugoslavia","balcans","bosnia"],s:1991,f:2001,c:[18.4,43.85],p:"cont",qui:"Sèrbia, Croàcia, Bòsnia, Eslovènia, Kosovo i Macedònia, amb intervenció de l'OTAN.",d:"La desintegració de Iugoslàvia va provocar guerres ètniques, amb el setge de Sarajevo i el genocidi de Srebrenica (1995). Van ser els primers conflictes a Europa després de 1945."},
+{n:"Guerra civil i genocidi de Ruanda",al:["ruanda","rwanda","genocidi de ruanda"],s:1990,f:1994,c:[29.9,-1.95],p:"cont",qui:"El govern hutu contra el Front Patriòtic Ruandés (tutsi).",d:"El 1994, en uns 100 dies, extremistes hutus van assassinar uns 800.000 tutsis i hutus moderats. El genocidi va acabar quan el FPR va prendre el poder, i la crisi es va estendre al Congo."},
+{n:"Guerra de l'Afganistan (2001-2021)",al:["afganistan","guerra de l'afganistan"],s:2001,f:2021,c:[65.5,32.5],p:"cont",qui:"Els EUA, l'OTAN i el govern afganés contra els talibans i al-Qaida.",d:"Després dels atemptats de l'11 de setembre de 2001, els EUA van envair l'Afganistan. Després de 20 anys, la retirada nord-americana (2021) va permetre que els talibans tornaren al poder."},
+{n:"Guerra de l'Iraq",al:["iraq","guerra de l'iraq"],s:2003,f:2011,c:[44.4,33.3],p:"cont",qui:"Els EUA, el Regne Unit i aliats (inclosa Espanya fins al 2004) contra l'Iraq de Saddam Hussein; després, insurgència.",d:"La invasió es va justificar amb armes de destrucció massiva que no es van trobar. Saddam va caure ràpidament, però va seguir una guerra civil i va nàixer el que seria l'Estat Islàmic."}
+];
+
+
+// ===== Secció: Conflictes del món =====
+const CF_REG=[["eu","🏰","Europa i Caucas","#5b6bd6"],["om","🕌","Orient Mitjà i Nord d'Àfrica","#c0782b"],["af","🌍","Àfrica subsahariana","#2e8b57"],["as","🌏","Àsia","#b03a6f"],["am","🌎","Amèrica","#1f7fa6"]];
+const CF_PER=[["ant","🏛️","Edat Antiga","#8e6c3a"],["med","🏰","Edat Mitjana","#6a4c93"],["mod","⛵","Edat Moderna","#1f7fa6"],["cont","🏭","Edat Contemporània","#c0392b"]];
+const CF_INT=[["Tensió o conflicte congelat","#8a96a3"],["Intensitat baixa","#e9b93a"],["Intensitat mitjana","#e67e22"],["Guerra / intensitat alta","#c0392b"]];
+const CF_NOWYEAR=2026;
+CF_NOW.forEach((x,i)=>{x.i0=i;x.num=i+1;x.k=x.r;});CF_HIST.forEach((x,i)=>{x.i0=i;x.num=i+1;x.k=x.p;});
+const cfYear=y=>y<0?(-y)+" aC":String(y);
+function cfYears(x){if(x.f===undefined)return CF_NOWYEAR-x.s;let y=x.f-x.s;if(x.s<0&&x.f>0)y-=1;return y;}
+function cfDurTxt(x){if(x.du)return x.du;const y=cfYears(x);let t=y<1?"menys d'un any":y===1?"1 any":y+" anys";
+  if(y>=100){const s=(y/100);t+=` (${(Math.round(s*10)/10).toString().replace(".",",")} segles)`;}else if(y>=20)t+=` (unes ${Math.round(y/10)} dècades)`;return t;}
+function cfWhen(x){return x.f===undefined?`Des de ${cfYear(x.s)} · ${cfDurTxt(x)}`:(x.s===x.f?cfYear(x.s):`${cfYear(x.s)} – ${cfYear(x.f)}`)+` · ${cfDurTxt(x)}`;}
+function cfMonths(x){if(x.du){const m=x.du.match(/(\d+)\s*(dies|mesos)/);if(m)return m[2]==="dies"?(+m[1])/30:+m[1];if(/any i mig/.test(x.du))return 18;if(/mesos/.test(x.du))return 10;}return Math.max(1,cfYears(x)*12);}
+const cfBarW=x=>Math.max(3,Math.round(Math.log10(cfMonths(x)+1)/Math.log10(800*12+1)*100));
+const cfNorm=s=>(" "+(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`´·.,:;()\-–]/g," ")+" ").replace(/\b(guerra|guerres|conflicte|conflictes|de|del|dels|d|l|la|les|el|els|i|a|en|amb|y|the|of|war)\b/g," ").replace(/\s+/g," ").trim();
+function cfOk(it,txt){const t=cfNorm(txt);if(t.length<2)return false;const c=[cfNorm(it.n),...it.al.map(cfNorm)];return c.some(v=>v===t||(v.length>=5&&agLev(v,t)<=(v.length>=10?2:1)));}
+const CFV={on:false,set:"now",mode:"vore",k:1,sort:"date",cats:{now:Object.fromEntries(CF_REG.map(c=>[c[0],true])),hist:Object.fromEntries(CF_PER.map(c=>[c[0],true]))}};
+const cfData=()=>CFV.set==="now"?CF_NOW:CF_HIST;const cfCats=()=>CFV.set==="now"?CF_REG:CF_PER;
+const cfIts=()=>cfData().filter(x=>CFV.cats[CFV.set][x.k]);
+const cfCol=x=>CFV.set==="now"?CF_INT[x.i][1]:CF_PER.find(c=>c[0]===x.p)[3];
+function cfOpen(mode,set){if(mode)CFV.mode=mode;if(set)CFV.set=set;CFV.on=true;CFV.fit=null;
+  let w=$("#cfview");if(!w){w=document.createElement("div");w.id="cfview";$("#mapwrap").appendChild(w);
+    if(window.ResizeObserver)new ResizeObserver(()=>{if(CFV.on&&w.clientWidth&&CFV.sz!==w.clientWidth+"x"+w.clientHeight){clearTimeout(CFV.rt);CFV.rt=setTimeout(cfDraw,150);}}).observe(w);}
+  w.innerHTML=`<svg id="cfsvg"></svg><div id="cfmsg" class="agmsgx"></div><div id="cflegend"></div><div class="citybtns"><button id="cfin">+</button><button id="cfout">−</button><button id="cffit" title="Tot el món">⟲</button><button id="cfclose" title="Tancar">✖</button></div>`;w.style.display="block";
+  $("#cfclose").onclick=()=>{if(tab==="conflicts")setTab("explore");else cfClose();};$("#cfin").onclick=()=>CFV.svg.transition().call(CFV.zoom.scaleBy,1.7);$("#cfout").onclick=()=>CFV.svg.transition().call(CFV.zoom.scaleBy,1/1.7);$("#cffit").onclick=()=>CFV.svg.transition().call(CFV.zoom.transform,d3.zoomIdentity);
+  cfStart();}
+function cfClose(){CFV.on=false;clearInterval(CFV.tm);const w=$("#cfview");if(w)w.style.display="none";side.style.userSelect="";}
+function cfStart(){CFV.done={};CFV.err=0;CFV.sel=null;CFV.hl=null;CFV.fitxa=null;CFV.t0=Date.now();CFV.fin=false;CFV.ans={};CFV.res=null;CFV.reveal=false;
+  CFV.pool=d3.shuffle(cfIts().map(x=>x.i0));clearInterval(CFV.tm);if(CFV.mode==="facil")CFV.tm=setInterval(()=>{const e=$("#cftime");if(e&&!CFV.fin)e.textContent=cfClock();},1000);
+  cfDraw();cfSide();}
+const cfClock=()=>{const s=Math.floor((Date.now()-CFV.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+function cfDraw(){const w0=$("#cfview");if(!w0||!w0.clientWidth)return;const w=w0.clientWidth,h=w0.clientHeight;CFV.sz=w+"x"+h;
+  const svg=d3.select("#cfsvg");svg.selectAll("*").remove();CFV.svg=svg;CFV.k=1;CFV.bs=Math.max(0.8,Math.min(1,Math.min(w,h*1.5)/1000));
+  const pr=d3.geoNaturalEarth1().fitExtent([[8,8],[w-52,h-8]],{type:"MultiPoint",coordinates:[[-168,72],[180,72],[-168,-50],[180,-50],[0,78],[0,-56]]});
+  const path=d3.geoPath(pr);const g=svg.append("g");CFV.g=g;
+  g.append("path").attr("d",path({type:"Sphere"})).attr("fill","#d7e9f5");
+  const hi={};if(CFV.set==="now")cfIts().forEach(x=>(x.iso||[]).forEach(k=>{hi[k]=Math.max(hi[k]??-1,x.i);}));
+  COUNTRIES.forEach(c=>{const f=featBy[c.id];if(!f||c.id==="ATA")return;const v=hi[c.id];
+    g.append("path").attr("d",path(f)).attr("fill",v===undefined?"#f4f1e8":d3.interpolateRgb("#f4f1e8",CF_INT[v][1])(0.55)).attr("stroke","#b9b2a0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");});
+  const its=cfIts();its.forEach(x=>{x.ap=pr(x.c);});
+  const gB=g.append("g");
+  CFV.badges=gB.selectAll("g.agb").data(its,d=>d.i0).join("g").attr("class","agb cfb").style("cursor","pointer");
+  CFV.badges.each(function(d){const b=d3.select(this);const c=cfCol(d);
+    b.append("circle").attr("class","agbc").attr("r",10).attr("fill","#fff").attr("stroke",c).attr("stroke-width",2.6);
+    b.append("text").attr("class","agbn").attr("y",3.8).attr("text-anchor","middle").text(d.num);
+    b.append("text").attr("class","agnm").attr("x",13).attr("y",4).text(d.n);});
+  CFV.badges.on("click",(e,d)=>{e.stopPropagation();cfBadgeClick(d);});
+  CFV.zoom=d3.zoom().scaleExtent([1,16]).on("zoom",e=>{CFV.k=e.transform.k;g.attr("transform",e.transform);cfScale();});
+  svg.call(CFV.zoom).on("dblclick.zoom",null);cfScale();cfRefresh();
+  const lg=$("#cflegend");if(lg)lg.innerHTML=CFV.set==="now"?CF_INT.slice().reverse().map(c=>`<div><span style="background:${c[1]}"></span>${c[0]}</div>`).join(""):CF_PER.map(c=>`<div><span style="background:${c[3]}"></span>${c[2]}</div>`).join("");}
+function cfScale(){if(!CFV.badges)return;const k=CFV.k,bs=CFV.bs||1;CFV.badges.attr("transform",d=>`translate(${d.ap[0]},${d.ap[1]}) scale(${bs*Math.min(1.3,Math.pow(k,0.45))/k})`);
+  CFV.badges.select(".agnm").style("visibility",CFV.mode==="vore"&&k<1.6&&cfIts().length>20?"hidden":null);}
+function cfRefresh(){if(!CFV.badges)return;const m=CFV.mode;
+  CFV.badges.classed("ok",d=>m!=="vore"&&(CFV.done[d.i0]||(CFV.res&&CFV.res[d.i0]===1))).classed("bad",d=>m==="dificil"&&CFV.res&&CFV.res[d.i0]===0).classed("hl",d=>CFV.hl===d.i0)
+    .select(".agnm").style("display",d=>(m==="vore"||CFV.done[d.i0]||(m==="dificil"&&(CFV.reveal||(CFV.res&&CFV.res[d.i0]===1))))?null:"none");
+  CFV.badges.filter(d=>CFV.hl===d.i0).raise();cfScale();
+  if(CFV.hl!=null)CFV.badges.filter(d=>CFV.hl===d.i0).select(".agnm").style("visibility",m==="vore"||CFV.done[CFV.hl]?"visible":null);}
+function cfFocus(i,zoom){CFV.hl=i;cfRefresh();const x=cfData()[i];if(zoom&&x&&x.ap){const w=$("#cfview").clientWidth,h=$("#cfview").clientHeight;const k=Math.max(CFV.k,3);CFV.svg.transition().duration(600).call(CFV.zoom.transform,d3.zoomIdentity.translate(w/2,h*0.45).scale(k).translate(-x.ap[0],-x.ap[1]));}}
+function cfMsg(t,cls){const m=$("#cfmsg");if(!m)return;m.className="agmsgx "+(cls||"");m.textContent=t;m.style.display=t?"block":"none";clearTimeout(CFV.mt);if(t)CFV.mt=setTimeout(()=>{m.style.display="none";},1800);}
+function cfBadgeClick(d){
+  if(CFV.mode==="vore"){CFV.fitxa=d.i0;cfFocus(d.i0);cfSide();side.scrollTop=0;return;}
+  if(CFV.mode==="facil"){if(CFV.done[d.i0]){cfMsg(d.n);return;}if(CFV.sel==null){cfFocus(d.i0);cfMsg("Ara tria el nom a la llista o arrossega'l ací");return;}cfTry(CFV.sel,d.i0);return;}
+  cfFocus(d.i0);const inp=document.querySelector(`#cfin${d.i0}`);if(inp){inp.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(()=>inp.focus({preventScroll:true}),250);}}
+function cfTry(nameI,t){const D=cfData();
+  if(nameI===t){CFV.done[t]=true;CFV.sel=null;CFV.hl=null;cfMsg("✅ "+D[t].n,"ok");}
+  else{CFV.err++;cfMsg("❌ No és ací. Torna-ho a provar!","bad");const b=CFV.badges.filter(d=>d.i0===t);b.classed("shake",false);void b.node().getBBox();b.classed("shake",true);setTimeout(()=>b.classed("shake",false),500);}
+  cfRefresh();cfSide(true);const tot=cfIts().length;if(Object.keys(CFV.done).length===tot&&!CFV.fin){CFV.fin=true;cfFinish();}}
+function cfFinish(){const t=cfClock();cfSide();const box=$("#cfend");if(box)box.innerHTML=`<div class="card" style="border:2px solid #2e9e5b"><h3>🎉 Molt bé!</h3><p>Has col·locat tots els noms en <b>${t}</b> amb <b>${CFV.err}</b> ${CFV.err===1?"error":"errors"}.</p><div class="row"><button class="btn" id="cfagain">🔄 Tornar a jugar</button><button class="btn sec" id="cftodif">🔴 Provar el difícil</button></div></div>`;
+  $("#cfagain").onclick=()=>cfStart();$("#cftodif").onclick=()=>{CFV.mode="dificil";cfStart();};}
+function cfFitxaHtml(x){const now=CFV.set==="now";const rc=now?CF_REG.find(c=>c[0]===x.r):CF_PER.find(c=>c[0]===x.p);
+  return `<div class="card cffitxa" style="border-left:5px solid ${cfCol(x)}"><div class="row" style="justify-content:space-between;gap:8px;align-items:flex-start"><h3 style="margin:0">${x.num}. ${esc(x.n)}</h3><button class="closex" id="cffx" title="Tancar">×</button></div>
+  <div class="small" style="margin:4px 0">${rc[1]} ${rc[2]}${now?` · <span class="cfint" style="background:${CF_INT[x.i][1]}">${CF_INT[x.i][0]}</span>`:""}</div>
+  <p class="cfkv"><b>📅 ${now?"Inici":"Dates"}:</b> ${cfWhen(x)}</p>
+  <div class="cfbar"><span style="width:${cfBarW(x)}%;background:${cfCol(x)}"></span></div>
+  <p class="cfkv"><b>👥 ${now?"Qui hi participa":"Bàndols"}:</b> ${esc(x.qui)}</p>
+  ${now?`<h4>📖 Origen del conflicte</h4><p>${esc(x.o)}</p><h4>📍 Estat actual (novembre de 2026)</h4><p>${esc(x.e)}</p>`:`<h4>📖 Què va passar</h4><p>${esc(x.d)}</p>${x.m?`<p class="cfkv"><b>✝️ Morts aproximades:</b> ${esc(x.m)}</p>`:""}`}</div>`;}
+function cfListHtml(its){const now=CFV.set==="now";
+  if(!now&&CFV.sort==="dur"){return `<div class="cflist">${its.slice().sort((a,b)=>cfMonths(b)-cfMonths(a)).map(cfRow).join("")}</div>`;}
+  return cfCats().filter(c=>CFV.cats[CFV.set][c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3><div class="cflist">${its.filter(x=>x.k===c[0]).sort((a,b)=>now?(b.i-a.i)||(a.s-b.s):a.s-b.s).map(cfRow).join("")}</div>`).join("");}
+function cfRow(x){return `<div class="cfrow ${CFV.hl===x.i0?"on":""}" data-i="${x.i0}"><span class="agnum" style="border-color:${cfCol(x)}">${x.num}</span><div class="cfrt"><b>${esc(x.n)}</b><div class="small">${cfWhen(x)}</div><div class="cfbar sm"><span style="width:${cfBarW(x)}%;background:${cfCol(x)}"></span></div></div></div>`;}
+function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=CFV.mode,now=CFV.set==="now";
+  const sets=`<div class="seg" id="cfset"><button data-v="now" class="${now?"on":""}">⚔️ Actuals (${CF_NOW.length})</button><button data-v="hist" class="${!now?"on":""}">📜 Història (${CF_HIST.length})</button></div>`;
+  const modes=`<div class="seg" id="cfmode" style="margin-top:6px">${[["vore",now?"👀 Vore'ls tots":"📜 Línia del temps"],["facil","🟢 Fàcil"],["dificil","🔴 Difícil"]].map(([v,t])=>`<button data-v="${v}" class="${m===v?"on":""}">${t}</button>`).join("")}</div>`;
+  const cats=`<div class="small" style="margin-top:8px"><b>${now?"Regions":"Èpoques"}:</b></div><div style="margin-top:4px">${cfCats().map(c=>{const on=CFV.cats[CFV.set][c[0]];return `<span class="chip cfcat ${on?"on":""}" data-c="${c[0]}" style="${on?`background:${c[3]};color:#fff;border-color:${c[3]}`:""}">${c[1]} ${c[2]} ${cfData().filter(x=>x.k===c[0]).length}</span>`;}).join("")}</div>`;
+  let body="";
+  if(m==="vore"){
+    if(CFV.fitxa!=null)body=`<div style="margin-top:8px">${cfFitxaHtml(cfData()[CFV.fitxa])}</div>`;
+    body+=now?`<p class="small" style="margin:8px 0">Toca un número del mapa o un conflicte de la llista per a vore'n l'origen i l'estat actual. Els països implicats es pinten segons la intensitat.</p>`
+      :`<div class="row" style="margin:8px 0;gap:6px"><span class="small">Ordenar:</span><div class="seg" id="cfsort"><button data-v="date" class="${CFV.sort==="date"?"on":""}">📅 Per data</button><button data-v="dur" class="${CFV.sort==="dur"?"on":""}">⏳ Per durada</button></div></div><p class="small" style="margin:4px 0">La barra mostra la durada (escala logarítmica: de dies a segles).</p>`;
+    body+=cfListHtml(its);}
+  else if(m==="facil"){const left=CFV.pool.filter(i=>!CFV.done[i]);
+    body=`<div class="row" style="justify-content:space-between;margin-top:8px"><span><b>✅ ${Object.keys(CFV.done).length} / ${its.length}</b> · ❌ ${CFV.err}</span><span>⏱️ <span id="cftime">${cfClock()}</span></span></div>
+    <p class="small" style="margin:6px 0">Arrossega cada nom fins al seu número del mapa (o toca el nom i després el número). Fes zoom per a separar els números que estan junts.</p><div id="cfend"></div>
+    <div>${left.map(i=>`<span class="chip agdrag cfdrag ${CFV.sel===i?"on":""}" data-i="${i}">${esc(cfData()[i].n)}</span>`).join("")}</div>`;}
+  else{const nOk=CFV.res?Object.values(CFV.res).filter(v=>v===1).length:0;
+    body=`<p class="small" style="margin:6px 0">Escriu el nom de cada número. N'hi ha prou amb el nom principal (per exemple «Sudan», «Caixmir», «Trenta Anys»). No cal escriure «Guerra de…» i els accents no compten.</p>
+    ${CFV.res?`<div class="card" style="margin:6px 0"><b>Resultat: ${nOk} / ${its.length}</b>${nOk===its.length?" 🎉 Perfecte!":""}</div>`:""}
+    <div class="row" style="margin:6px 0"><button class="btn" id="cfcheck">✔️ Corregir</button><button class="btn sec" id="cfsol">${CFV.reveal?"🙈 Amagar solucions":"👀 Vore solucions"}</button><button class="btn sec" id="cfreset">🔄 Començar de nou</button></div>
+    ${cfCats().filter(c=>CFV.cats[CFV.set][c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3>${its.filter(x=>x.k===c[0]).map(x=>{const r=CFV.res?CFV.res[x.i0]:undefined;return `<div class="agrow ${r===1?"ok":r===0?"bad":""}"><span class="agnum" style="border-color:${cfCol(x)}">${x.num}</span><input id="cfin${x.i0}" data-i="${x.i0}" autocomplete="off" spellcheck="false" value="${esc(CFV.ans[x.i0]||"")}" ${r===1?"disabled":""} placeholder="…">${r===1?"✅":r===0?"❌":""}${CFV.reveal&&r!==1?`<span class="small agsol">${esc(x.n)}</span>`:""}</div>`;}).join("")}`).join("")}`;}
+  side.style.userSelect=m==="facil"?"none":"";
+  side.innerHTML=`<h2>⚔️ Conflictes del món</h2>${sets}${modes}${m==="facil"?body+cats:cats+body}<p class="small" style="margin-top:14px;opacity:.8">Fonts: CFR Global Conflict Tracker, International Crisis Group (CrisisWatch), Escola de Cultura de Pau (UAB), ACLED i premsa internacional (Al Jazeera, Reuters, AFP), consultades el novembre de 2026. La situació pot canviar ràpidament.</p>`;
+  side.scrollTop=st;
+  side.querySelectorAll("#cfset button").forEach(b=>b.onclick=()=>{CFV.set=b.dataset.v;if(CFV.set==="hist"&&CFV.mode==="vore")CFV.sort="date";cfStart();});
+  side.querySelectorAll("#cfmode button").forEach(b=>b.onclick=()=>{CFV.mode=b.dataset.v;cfStart();});
+  side.querySelectorAll("#cfsort button").forEach(b=>b.onclick=()=>{CFV.sort=b.dataset.v;cfSide(true);});
+  side.querySelectorAll(".cfcat").forEach(b=>b.onclick=()=>{const c=b.dataset.c,C=CFV.cats[CFV.set];C[c]=!C[c];if(!Object.values(C).some(Boolean))C[c]=true;cfStart();});
+  side.querySelectorAll(".cfrow").forEach(el=>el.onclick=()=>{const i=+el.dataset.i;CFV.fitxa=i;cfFocus(i,true);cfSide();side.scrollTop=0;});
+  const fx=$("#cffx");if(fx)fx.onclick=()=>{CFV.fitxa=null;CFV.hl=null;cfRefresh();cfSide(true);};
+  if(m==="facil")side.querySelectorAll(".cfdrag").forEach(cfDragBind);
+  if(m==="dificil"){side.querySelectorAll(".agrow input").forEach(inp=>{const i=+inp.dataset.i;inp.onfocus=()=>{CFV.hl=i;cfRefresh();};inp.oninput=()=>{CFV.ans[i]=inp.value;};inp.onkeydown=e=>{if(e.key==="Enter"){const all=[...side.querySelectorAll(".agrow input:not([disabled])")];const n=all[all.indexOf(inp)+1];if(n)n.focus();}};});
+    $("#cfcheck").onclick=()=>{CFV.res={};its.forEach(x=>{CFV.res[x.i0]=cfOk(x,CFV.ans[x.i0]||"")?1:0;});cfRefresh();cfSide(true);};
+    $("#cfsol").onclick=()=>{CFV.reveal=!CFV.reveal;cfRefresh();cfSide(true);};
+    $("#cfreset").onclick=()=>cfStart();}}
+function cfDragBind(el){const i=+el.dataset.i;let ghost=null,sx=0,sy=0,moved=false;
+  el.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();sx=e.clientX;sy=e.clientY;moved=false;el.setPointerCapture(e.pointerId);
+    const mv=ev=>{if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<6)return;if(!moved){moved=true;ghost=el.cloneNode(true);ghost.classList.add("agghost");document.body.appendChild(ghost);el.style.opacity=.35;}
+      ghost.style.left=ev.clientX+"px";ghost.style.top=ev.clientY+"px";CFV.hl=cfTarget(ev.clientX,ev.clientY);cfRefresh();};
+    const up=ev=>{el.removeEventListener("pointermove",mv);el.removeEventListener("pointerup",up);el.removeEventListener("pointercancel",up);
+      if(ghost){ghost.remove();ghost=null;el.style.opacity="";}try{getSelection().removeAllRanges();}catch(_){}
+      if(moved){const t=cfTarget(ev.clientX,ev.clientY);CFV.hl=null;if(t!=null)cfTry(i,t);else cfRefresh();}
+      else{CFV.sel=CFV.sel===i?null:i;if(CFV.sel!=null&&CFV.hl!=null&&!CFV.done[CFV.hl]){cfTry(i,CFV.hl);return;}cfSide(true);if(CFV.sel!=null)cfMsg("Ara toca el número on va «"+cfData()[i].n+"»");}};
+    el.addEventListener("pointermove",mv);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);});}
+function cfTarget(x,y){if(!CFV.badges)return null;let best=null,bd=26*26;CFV.badges.each(function(d){if(CFV.done[d.i0])return;const r=this.querySelector(".agbc").getBoundingClientRect();const dd=(r.left+r.width/2-x)**2+(r.top+r.height/2-y)**2;if(dd<bd){bd=dd;best=d.i0;}});return best;}
+{const _st2=setTab;setTab=function(t){if(CFV.on&&t!=="conflicts")cfClose();const r=_st2.apply(this,arguments);if(t==="conflicts")cfOpen();return r;};}
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
