@@ -247,6 +247,8 @@ body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
 #cflegend{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);border-radius:8px;padding:5px 8px;font-size:11px;z-index:5;color:#223;pointer-events:none}#cflegend div{display:flex;align-items:center;gap:5px;line-height:1.5}#cflegend span{width:11px;height:11px;border-radius:3px;display:inline-block}@media (max-width:620px){#cflegend{display:none}}
 .cfrow{display:flex;gap:8px;align-items:center;padding:6px;border-radius:8px;cursor:pointer;border:1px solid transparent}.cfrow:hover,.cfrow.on{background:rgba(127,127,127,.12);border-color:var(--cardline)}.cfrt{flex:1;min-width:0}
 .cfbar{height:8px;background:rgba(127,127,127,.18);border-radius:4px;overflow:hidden;margin:4px 0}.cfbar.sm{height:5px;margin:3px 0 0}.cfbar span{display:block;height:100%;border-radius:4px}
+.cfsidesbig{font-size:13px;margin:6px 0;gap:6px 14px}.cfsidesbig i{width:14px;height:14px}.agb.dim{opacity:.25}.cfyear{font-size:40px;font-weight:800;text-align:center;letter-spacing:1px}#cfslider{width:100%;margin:6px 0}.cfctl{justify-content:center;gap:5px;flex-wrap:wrap}.cfctl .btn{padding:6px 10px}
+.cfev{padding:6px;border-radius:8px;cursor:pointer;border:1px solid var(--cardline);margin:5px 0}.cfev:hover{background:rgba(127,127,127,.1)}.cfsides{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:3px}.cfsides i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
 .cfint{color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700}.cffitxa h4{margin:10px 0 4px}.cffitxa p{margin:4px 0;line-height:1.45}.cfkv{margin:3px 0}
 #agmsg{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#173a5e;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;z-index:7;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:80%;text-align:center;pointer-events:none}#agmsg.ok{background:#2e9e5b}#agmsg.bad{background:#c0392b}
 .agdrag{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}.agdrag.on{background:#ffd84d;border-color:#e2a400}
@@ -3072,19 +3074,22 @@ function cfOpen(mode,set){if(mode)CFV.mode=mode;if(set)CFV.set=set;CFV.on=true;C
   w.innerHTML=`<svg id="cfsvg"></svg><div id="cfmsg" class="agmsgx"></div><div id="cflegend"></div><div class="citybtns"><button id="cfin">+</button><button id="cfout">−</button><button id="cffit" title="Tot el món">⟲</button><button id="cfclose" title="Tancar">✖</button></div>`;w.style.display="block";
   $("#cfclose").onclick=()=>{if(tab==="conflicts")setTab("explore");else cfClose();};$("#cfin").onclick=()=>CFV.svg.transition().call(CFV.zoom.scaleBy,1.7);$("#cfout").onclick=()=>CFV.svg.transition().call(CFV.zoom.scaleBy,1/1.7);$("#cffit").onclick=()=>CFV.svg.transition().call(CFV.zoom.transform,d3.zoomIdentity);
   cfStart();}
-function cfClose(){CFV.on=false;clearInterval(CFV.tm);const w=$("#cfview");if(w)w.style.display="none";side.style.userSelect="";}
-function cfStart(){CFV.done={};CFV.err=0;CFV.sel=null;CFV.hl=null;CFV.fitxa=null;CFV.t0=Date.now();CFV.fin=false;CFV.ans={};CFV.res=null;CFV.reveal=false;
+function cfClose(){if(typeof cfPause==="function")cfPause();CFV.on=false;clearInterval(CFV.tm);const w=$("#cfview");if(w)w.style.display="none";side.style.userSelect="";}
+function cfStart(){if(typeof cfPause==="function")cfPause();CFV.done={};CFV.err=0;CFV.sel=null;CFV.hl=null;CFV.fitxa=null;CFV.t0=Date.now();CFV.fin=false;CFV.ans={};CFV.res=null;CFV.reveal=false;
   CFV.pool=d3.shuffle(cfIts().map(x=>x.i0));clearInterval(CFV.tm);if(CFV.mode==="facil")CFV.tm=setInterval(()=>{const e=$("#cftime");if(e&&!CFV.fin)e.textContent=cfClock();},1000);
   cfDraw();cfSide();}
 const cfClock=()=>{const s=Math.floor((Date.now()-CFV.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
 function cfDraw(){const w0=$("#cfview");if(!w0||!w0.clientWidth)return;const w=w0.clientWidth,h=w0.clientHeight;CFV.sz=w+"x"+h;
   const svg=d3.select("#cfsvg");svg.selectAll("*").remove();CFV.svg=svg;CFV.k=1;CFV.bs=Math.max(0.8,Math.min(1,Math.min(w,h*1.5)/1000));
   const pr=d3.geoNaturalEarth1().fitExtent([[8,8],[w-52,h-8]],{type:"MultiPoint",coordinates:[[-168,72],[180,72],[-168,-50],[180,-50],[0,78],[0,-56]]});
-  const path=d3.geoPath(pr);const g=svg.append("g");CFV.g=g;
+  const path=d3.geoPath(pr);CFV.path=path;const g=svg.append("g");CFV.g=g;
   g.append("path").attr("d",path({type:"Sphere"})).attr("fill","#d7e9f5");
   const hi={};if(CFV.set==="now")cfIts().forEach(x=>(x.iso||[]).forEach(k=>{hi[k]=Math.max(hi[k]??-1,x.i);}));
-  COUNTRIES.forEach(c=>{const f=featBy[c.id];if(!f||c.id==="ATA")return;const v=hi[c.id];
-    g.append("path").attr("d",path(f)).attr("fill",v===undefined?"#f4f1e8":d3.interpolateRgb("#f4f1e8",CF_INT[v][1])(0.55)).attr("stroke","#b9b2a0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");});
+  const defs=svg.append("defs");CF_PAL.forEach((pl,i)=>{const pt=defs.append("pattern").attr("id","cfpat"+i).attr("patternUnits","userSpaceOnUse").attr("width",3.2).attr("height",3.2).attr("patternTransform","rotate(45)");pt.append("rect").attr("width",3.2).attr("height",3.2).attr("fill",pl[1]);pt.append("rect").attr("width",1.6).attr("height",3.2).attr("fill",pl[0]);});
+  {const pt=defs.append("pattern").attr("id","cfsidepat").attr("patternUnits","userSpaceOnUse").attr("width",3.2).attr("height",3.2).attr("patternTransform","rotate(45)");pt.append("rect").attr("width",3.2).attr("height",3.2).attr("fill",CF_SC[1]);pt.append("rect").attr("width",1.6).attr("height",3.2).attr("fill",CF_SC[0]);}
+  CFV.cp={};COUNTRIES.forEach(c=>{const f=featBy[c.id];if(!f||c.id==="ATA")return;const v=hi[c.id];
+    CFV.cp[c.id]=g.append("path").attr("d",path(f)).attr("fill",v===undefined?"#f4f1e8":d3.interpolateRgb("#f4f1e8",CF_INT[v][1])(0.55)).attr("stroke","#b9b2a0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");});
+  CFV.cpDef={};Object.entries(CFV.cp).forEach(([k,p])=>CFV.cpDef[k]=p.attr("fill"));
   const its=cfIts();its.forEach(x=>{x.ap=pr(x.c);});
   const gB=g.append("g");
   CFV.badges=gB.selectAll("g.agb").data(its,d=>d.i0).join("g").attr("class","agb cfb").style("cursor","pointer");
@@ -3094,19 +3099,20 @@ function cfDraw(){const w0=$("#cfview");if(!w0||!w0.clientWidth)return;const w=w
     b.append("text").attr("class","agnm").attr("x",13).attr("y",4).text(d.n);});
   CFV.badges.on("click",(e,d)=>{e.stopPropagation();cfBadgeClick(d);});
   CFV.zoom=d3.zoom().scaleExtent([1,16]).on("zoom",e=>{CFV.k=e.transform.k;g.attr("transform",e.transform);cfScale();});
-  svg.call(CFV.zoom).on("dblclick.zoom",null);cfScale();cfRefresh();
+  svg.call(CFV.zoom).on("dblclick.zoom",null);cfScale();cfRefresh();if(CFV.mode==="evol")cfEvolApply();if(CFV.mode==="vore"&&CFV.fitxa!=null)cfPaintSides(cfData()[CFV.fitxa]);
   const lg=$("#cflegend");if(lg)lg.innerHTML=CFV.set==="now"?CF_INT.slice().reverse().map(c=>`<div><span style="background:${c[1]}"></span>${c[0]}</div>`).join(""):CF_PER.map(c=>`<div><span style="background:${c[3]}"></span>${c[2]}</div>`).join("");}
 function cfScale(){if(!CFV.badges)return;const k=CFV.k,bs=CFV.bs||1;CFV.badges.attr("transform",d=>`translate(${d.ap[0]},${d.ap[1]}) scale(${bs*Math.min(1.3,Math.pow(k,0.45))/k})`);
   CFV.badges.select(".agnm").style("visibility",CFV.mode==="vore"&&k<1.6&&cfIts().length>20?"hidden":null);}
 function cfRefresh(){if(!CFV.badges)return;const m=CFV.mode;
-  CFV.badges.classed("ok",d=>m!=="vore"&&(CFV.done[d.i0]||(CFV.res&&CFV.res[d.i0]===1))).classed("bad",d=>m==="dificil"&&CFV.res&&CFV.res[d.i0]===0).classed("hl",d=>CFV.hl===d.i0)
-    .select(".agnm").style("display",d=>(m==="vore"||CFV.done[d.i0]||(m==="dificil"&&(CFV.reveal||(CFV.res&&CFV.res[d.i0]===1))))?null:"none");
+  CFV.badges.classed("ok",d=>m!=="vore"&&(CFV.done[d.i0]||(CFV.res&&CFV.res[d.i0]===1))).classed("bad",d=>m==="dificil"&&CFV.res&&CFV.res[d.i0]===0).classed("hl",d=>CFV.hl===d.i0).classed("dim",d=>m==="vore"&&CFV.fitxa!=null&&CFV.fitxa!==d.i0)
+    .select(".agnm").style("display",d=>(m==="vore"||m==="evol"||CFV.done[d.i0]||(m==="dificil"&&(CFV.reveal||(CFV.res&&CFV.res[d.i0]===1))))?null:"none");
   CFV.badges.filter(d=>CFV.hl===d.i0).raise();cfScale();
   if(CFV.hl!=null)CFV.badges.filter(d=>CFV.hl===d.i0).select(".agnm").style("visibility",m==="vore"||CFV.done[CFV.hl]?"visible":null);}
 function cfFocus(i,zoom){CFV.hl=i;cfRefresh();const x=cfData()[i];if(zoom&&x&&x.ap){const w=$("#cfview").clientWidth,h=$("#cfview").clientHeight;const k=Math.max(CFV.k,3);CFV.svg.transition().duration(600).call(CFV.zoom.transform,d3.zoomIdentity.translate(w/2,h*0.45).scale(k).translate(-x.ap[0],-x.ap[1]));}}
 function cfMsg(t,cls){const m=$("#cfmsg");if(!m)return;m.className="agmsgx "+(cls||"");m.textContent=t;m.style.display=t?"block":"none";clearTimeout(CFV.mt);if(t)CFV.mt=setTimeout(()=>{m.style.display="none";},1800);}
 function cfBadgeClick(d){
   if(CFV.mode==="vore"){CFV.fitxa=d.i0;cfFocus(d.i0);cfSide();side.scrollTop=0;return;}
+  if(CFV.mode==="evol"){cfPause();cfPaintSides(d);const f=$("#cfevfx");if(f){f.innerHTML=cfFitxaHtml(d);const c=$("#cffx");if(c)c.onclick=()=>{f.innerHTML="";cfEvolApply();};f.scrollIntoView({block:"nearest"});}return;}
   if(CFV.mode==="facil"){if(CFV.done[d.i0]){cfMsg(d.n);return;}if(CFV.sel==null){cfFocus(d.i0);cfMsg("Ara tria el nom a la llista o arrossega'l ací");return;}cfTry(CFV.sel,d.i0);return;}
   cfFocus(d.i0);const inp=document.querySelector(`#cfin${d.i0}`);if(inp){inp.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(()=>inp.focus({preventScroll:true}),250);}}
 function cfTry(nameI,t){const D=cfData();
@@ -3120,7 +3126,7 @@ function cfFitxaHtml(x){const now=CFV.set==="now";const rc=now?CF_REG.find(c=>c[
   <div class="small" style="margin:4px 0">${rc[1]} ${rc[2]}${now?` · <span class="cfint" style="background:${CF_INT[x.i][1]}">${CF_INT[x.i][0]}</span>`:""}</div>
   <p class="cfkv"><b>📅 ${now?"Inici":"Dates"}:</b> ${cfWhen(x)}</p>
   <div class="cfbar"><span style="width:${cfBarW(x)}%;background:${cfCol(x)}"></span></div>
-  <p class="cfkv"><b>👥 ${now?"Qui hi participa":"Bàndols"}:</b> ${esc(x.qui)}</p>
+  <p class="cfkv"><b>👥 ${now?"Qui hi participa":"Bàndols"}:</b> ${esc(x.qui)}</p>${cfSidesHtml(x)}
   ${now?`<h4>📖 Origen del conflicte</h4><p>${esc(x.o)}</p><h4>📍 Estat actual (novembre de 2026)</h4><p>${esc(x.e)}</p>`:`<h4>📖 Què va passar</h4><p>${esc(x.d)}</p>${x.m?`<p class="cfkv"><b>✝️ Morts aproximades:</b> ${esc(x.m)}</p>`:""}`}</div>`;}
 function cfListHtml(its){const now=CFV.set==="now";
   if(!now&&CFV.sort==="dur"){return `<div class="cflist">${its.slice().sort((a,b)=>cfMonths(b)-cfMonths(a)).map(cfRow).join("")}</div>`;}
@@ -3128,7 +3134,7 @@ function cfListHtml(its){const now=CFV.set==="now";
 function cfRow(x){return `<div class="cfrow ${CFV.hl===x.i0?"on":""}" data-i="${x.i0}"><span class="agnum" style="border-color:${cfCol(x)}">${x.num}</span><div class="cfrt"><b>${esc(x.n)}</b><div class="small">${cfWhen(x)}</div><div class="cfbar sm"><span style="width:${cfBarW(x)}%;background:${cfCol(x)}"></span></div></div></div>`;}
 function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=CFV.mode,now=CFV.set==="now";
   const sets=`<div class="seg" id="cfset"><button data-v="now" class="${now?"on":""}">⚔️ Actuals (${CF_NOW.length})</button><button data-v="hist" class="${!now?"on":""}">📜 Història (${CF_HIST.length})</button></div>`;
-  const modes=`<div class="seg" id="cfmode" style="margin-top:6px">${[["vore",now?"👀 Vore'ls tots":"📜 Línia del temps"],["facil","🟢 Fàcil"],["dificil","🔴 Difícil"]].map(([v,t])=>`<button data-v="${v}" class="${m===v?"on":""}">${t}</button>`).join("")}</div>`;
+  const modes=`<div class="seg" id="cfmode" style="margin-top:6px">${(now?[["vore","👀 Vore'ls tots"]]:[["vore","📜 Llista"],["evol","▶️ Evolució"]]).concat([["facil","🟢 Fàcil"],["dificil","🔴 Difícil"]]).map(([v,t])=>`<button data-v="${v}" class="${m===v?"on":""}">${t}</button>`).join("")}</div>`;
   const cats=`<div class="small" style="margin-top:8px"><b>${now?"Regions":"Èpoques"}:</b></div><div style="margin-top:4px">${cfCats().map(c=>{const on=CFV.cats[CFV.set][c[0]];return `<span class="chip cfcat ${on?"on":""}" data-c="${c[0]}" style="${on?`background:${c[3]};color:#fff;border-color:${c[3]}`:""}">${c[1]} ${c[2]} ${cfData().filter(x=>x.k===c[0]).length}</span>`;}).join("")}</div>`;
   let body="";
   if(m==="vore"){
@@ -3136,6 +3142,7 @@ function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=C
     body+=now?`<p class="small" style="margin:8px 0">Toca un número del mapa o un conflicte de la llista per a vore'n l'origen i l'estat actual. Els països implicats es pinten segons la intensitat.</p>`
       :`<div class="row" style="margin:8px 0;gap:6px"><span class="small">Ordenar:</span><div class="seg" id="cfsort"><button data-v="date" class="${CFV.sort==="date"?"on":""}">📅 Per data</button><button data-v="dur" class="${CFV.sort==="dur"?"on":""}">⏳ Per durada</button></div></div><p class="small" style="margin:4px 0">La barra mostra la durada (escala logarítmica: de dies a segles).</p>`;
     body+=cfListHtml(its);}
+  else if(m==="evol"){body=cfEvolSide();}
   else if(m==="facil"){const left=CFV.pool.filter(i=>!CFV.done[i]);
     body=`<div class="row" style="justify-content:space-between;margin-top:8px"><span><b>✅ ${Object.keys(CFV.done).length} / ${its.length}</b> · ❌ ${CFV.err}</span><span>⏱️ <span id="cftime">${cfClock()}</span></span></div>
     <p class="small" style="margin:6px 0">Arrossega cada nom fins al seu número del mapa (o toca el nom i després el número). Fes zoom per a separar els números que estan junts.</p><div id="cfend"></div>
@@ -3148,7 +3155,7 @@ function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=C
   side.style.userSelect=m==="facil"?"none":"";
   side.innerHTML=`<h2>⚔️ Conflictes del món</h2>${sets}${modes}${m==="facil"?body+cats:cats+body}<p class="small" style="margin-top:14px;opacity:.8">Fonts: CFR Global Conflict Tracker, International Crisis Group (CrisisWatch), Escola de Cultura de Pau (UAB), ACLED i premsa internacional (Al Jazeera, Reuters, AFP), consultades el novembre de 2026. La situació pot canviar ràpidament.</p>`;
   side.scrollTop=st;
-  side.querySelectorAll("#cfset button").forEach(b=>b.onclick=()=>{CFV.set=b.dataset.v;if(CFV.set==="hist"&&CFV.mode==="vore")CFV.sort="date";cfStart();});
+  side.querySelectorAll("#cfset button").forEach(b=>b.onclick=()=>{CFV.set=b.dataset.v;if(CFV.set==="now"&&CFV.mode==="evol")CFV.mode="vore";if(CFV.set==="hist"&&CFV.mode==="vore")CFV.sort="date";cfStart();});
   side.querySelectorAll("#cfmode button").forEach(b=>b.onclick=()=>{CFV.mode=b.dataset.v;cfStart();});
   side.querySelectorAll("#cfsort button").forEach(b=>b.onclick=()=>{CFV.sort=b.dataset.v;cfSide(true);});
   side.querySelectorAll(".cfcat").forEach(b=>b.onclick=()=>{const c=b.dataset.c,C=CFV.cats[CFV.set];C[c]=!C[c];if(!Object.values(C).some(Boolean))C[c]=true;cfStart();});
@@ -3158,7 +3165,9 @@ function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=C
   if(m==="dificil"){side.querySelectorAll(".agrow input").forEach(inp=>{const i=+inp.dataset.i;inp.onfocus=()=>{CFV.hl=i;cfRefresh();};inp.oninput=()=>{CFV.ans[i]=inp.value;};inp.onkeydown=e=>{if(e.key==="Enter"){const all=[...side.querySelectorAll(".agrow input:not([disabled])")];const n=all[all.indexOf(inp)+1];if(n)n.focus();}};});
     $("#cfcheck").onclick=()=>{CFV.res={};its.forEach(x=>{CFV.res[x.i0]=cfOk(x,CFV.ans[x.i0]||"")?1:0;});cfRefresh();cfSide(true);};
     $("#cfsol").onclick=()=>{CFV.reveal=!CFV.reveal;cfRefresh();cfSide(true);};
-    $("#cfreset").onclick=()=>cfStart();}}
+    $("#cfreset").onclick=()=>cfStart();}
+  if(m==="evol")cfEvolBind();
+  if(m==="vore"){if(CFV.fitxa!=null)cfPaintSides(cfData()[CFV.fitxa]);else cfPaintDefault();}}
 function cfDragBind(el){const i=+el.dataset.i;let ghost=null,sx=0,sy=0,moved=false;
   el.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();sx=e.clientX;sy=e.clientY;moved=false;el.setPointerCapture(e.pointerId);
     const mv=ev=>{if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<6)return;if(!moved){moved=true;ghost=el.cloneNode(true);ghost.classList.add("agghost");document.body.appendChild(ghost);el.style.opacity=.35;}
@@ -3170,6 +3179,177 @@ function cfDragBind(el){const i=+el.dataset.i;let ghost=null,sx=0,sy=0,moved=fal
     el.addEventListener("pointermove",mv);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);});}
 function cfTarget(x,y){if(!CFV.badges)return null;let best=null,bd=26*26;CFV.badges.each(function(d){if(CFV.done[d.i0])return;const r=this.querySelector(".agbc").getBoundingClientRect();const dd=(r.left+r.width/2-x)**2+(r.top+r.height/2-y)**2;if(dd<bd){bd=dd;best=d.i0;}});return best;}
 {const _st2=setTab;setTab=function(t){if(CFV.on&&t!=="conflicts")cfClose();const r=_st2.apply(this,arguments);if(t==="conflicts")cfOpen();return r;};}
+
+
+// ===== Història: evolució any a any amb bàndols =====
+// a: bàndol 1 · b: bàndol 2 · c: països dividits per una guerra interna (ratllats amb els dos colors) — països actuals com a aproximació
+const CF_SIDES={
+"Guerres Mèdiques":{a:["GRC"],b:["IRN","IRQ","TUR","SYR","EGY"],la:"Ciutats gregues",lb:"Imperi persa"},
+"Guerra del Peloponès":{c:["GRC"],la:"Atenes",lb:"Esparta"},
+"Conquestes d'Alexandre el Gran":{a:["GRC","MKD"],b:["IRN","IRQ","TUR","SYR","EGY","AFG"],la:"Macedònia i grecs",lb:"Imperi persa"},
+"Guerres dels Regnes Combatents":{c:["CHN"],la:"Qin",lb:"Altres regnes xinesos"},
+"Guerres Púniques":{a:["ITA"],b:["TUN"],la:"Roma",lb:"Cartago"},
+"Guerra de les Gàl·lies":{a:["ITA"],b:["FRA","BEL"],la:"Roma",lb:"Pobles gals"},
+"Conquesta romana d'Hispània":{a:["ITA"],b:["ESP","PRT"],la:"Roma",lb:"Pobles hispans"},
+"Reconquesta":{c:["ESP","PRT"],b:["MAR"],la:"Regnes cristians",lb:"Al-Àndalus i imperis nord-africans"},
+"Croades":{a:["FRA","GBR","DEU","ITA","BEL"],b:["EGY","SYR","ISR","PSE","LBN","JOR","TUR","IRQ"],la:"Croats europeus",lb:"Estats musulmans"},
+"Conquestes mongoles":{a:["MNG"],b:["CHN","RUS","IRN","IRQ","UKR","POL","HUN","KOR","UZB","TKM","AFG","GEO","ARM","KAZ"],la:"Imperi mongol",lb:"Pobles atacats"},
+"Guerra dels Cent Anys":{a:["GBR"],b:["FRA"],la:"Anglaterra",lb:"França"},
+"Germanies":{c:["ESP"],la:"Agermanats",lb:"Noblesa i rei"},
+"Conquesta de l'Imperi asteca":{a:["ESP"],b:["MEX"],la:"Castella i aliats indígenes",lb:"Imperi mexica"},
+"Guerres de religió de França":{c:["FRA"],la:"Catòlics",lb:"Hugonots"},
+"Conquesta de l'Imperi inca":{a:["ESP"],b:["PER","BOL","ECU"],la:"Castella",lb:"Imperi inca"},
+"Guerra dels Vuitanta Anys":{a:["NLD"],b:["ESP","BEL"],la:"Províncies Unides",lb:"Monarquia Hispànica"},
+"Guerra dels Trenta Anys":{a:["SWE","FRA","NLD","DNK"],b:["ESP","AUT","CZE"],c:["DEU"],la:"Protestants i França",lb:"Habsburg catòlics"},
+"Guerra dels Segadors":{a:["FRA"],c:["ESP"],la:"Catalunya i França",lb:"Monarquia Hispànica"},
+"Guerra Civil anglesa":{c:["GBR"],la:"Parlament",lb:"Rei Carles I"},
+"Guerra de Successió Espanyola":{a:["FRA"],b:["GBR","NLD","AUT","PRT"],c:["ESP"],la:"Felip V (Borbons)",lb:"Arxiduc Carles (Àustries)"},
+"Guerra dels Set Anys":{a:["GBR","DEU","PRT"],b:["FRA","AUT","RUS","SWE","ESP"],la:"Gran Bretanya i Prússia",lb:"França, Àustria i Rússia"},
+"Guerra d'Independència dels Estats Units":{a:["USA","FRA","ESP"],b:["GBR","CAN"],la:"Tretze Colònies i aliats",lb:"Gran Bretanya"},
+"Guerres Napoleòniques":{a:["FRA"],b:["GBR","AUT","RUS","ESP","PRT","SWE","DEU"],la:"França napoleònica",lb:"Coalicions"},
+"Guerra del Francès":{a:["ESP","PRT","GBR"],b:["FRA"],la:"Espanya, Portugal i Gran Bretanya",lb:"França"},
+"Guerres d'independència hispanoamericanes":{a:["MEX","COL","VEN","ECU","PER","BOL","CHL","ARG","PRY","URY","GTM","HND","SLV","NIC","CRI","PAN"],b:["ESP"],la:"Independentistes",lb:"Monarquia Hispànica"},
+"Guerres Carlines":{c:["ESP"],la:"Liberals",lb:"Carlistes"},
+"Guerres de l'Opi":{a:["GBR","FRA"],b:["CHN"],la:"Gran Bretanya i França",lb:"Xina"},
+"Rebel·lió Taiping":{c:["CHN"],la:"Dinastia Qing",lb:"Regne Taiping"},
+"Guerra de Crimea":{a:["TUR","GBR","FRA","ITA"],b:["RUS"],la:"Otomans i aliats",lb:"Rússia"},
+"Guerra de Secessió dels Estats Units":{c:["USA"],la:"La Unió (nord)",lb:"La Confederació (sud)"},
+"Guerra de la Triple Aliança":{a:["BRA","ARG","URY"],b:["PRY"],la:"Brasil, Argentina i Uruguai",lb:"Paraguai"},
+"Guerra Francoprussiana":{a:["DEU"],b:["FRA"],la:"Prússia i estats alemanys",lb:"França"},
+"Guerra de Cuba":{a:["CUB","USA","PHL"],b:["ESP"],la:"Cubans i EUA",lb:"Espanya"},
+"Guerra dels Bòers":{a:["GBR"],b:["ZAF"],la:"Imperi britànic",lb:"Repúbliques bòers"},
+"Guerra Russojaponesa":{a:["JPN"],b:["RUS"],la:"Japó",lb:"Rússia"},
+"Primera Guerra Mundial":{a:["FRA","GBR","RUS","ITA","USA","BEL","SRB","ROU","PRT","JPN","GRC","CAN","AUS","NZL"],b:["DEU","AUT","HUN","TUR","BGR"],la:"Aliats",lb:"Imperis Centrals"},
+"Guerra Civil russa":{c:["RUS","UKR","BLR"],la:"Exèrcit Roig",lb:"Exèrcit Blanc"},
+"Guerra del Rif":{a:["ESP","FRA"],b:["MAR"],la:"Espanya i França",lb:"Rifenys"},
+"Guerra Civil xinesa":{c:["CHN"],la:"Comunistes",lb:"Nacionalistes"},
+"Guerra Civil espanyola":{c:["ESP"],la:"Republicans",lb:"Sublevats (Franco)"},
+"Segona Guerra Sino-japonesa":{a:["CHN"],b:["JPN"],la:"Xina",lb:"Japó"},
+"Segona Guerra Mundial":{a:["GBR","FRA","USA","RUS","UKR","BLR","CHN","POL","CAN","AUS","NZL","NLD","BEL","NOR","GRC","SRB","HRV","BIH","IND","ZAF","BRA"],b:["DEU","AUT","ITA","JPN","HUN","ROU","BGR"],la:"Aliats",lb:"Eix"},
+"Guerra araboisraeliana de 1948":{a:["ISR"],b:["EGY","JOR","SYR","IRQ","LBN"],la:"Israel",lb:"Països àrabs"},
+"Guerra Freda":{a:["USA","CAN","GBR","FRA","DEU","ITA","BEL","NLD","NOR","DNK","PRT","ISL","GRC","TUR"],b:["RUS","UKR","BLR","KAZ","UZB","TKM","KGZ","TJK","GEO","ARM","AZE","MDA","LTU","LVA","EST","POL","CZE","SVK","HUN","ROU","BGR"],la:"Bloc occidental (OTAN)",lb:"Bloc comunista (URSS)"},
+"Guerra de Corea":{a:["KOR","USA"],b:["PRK","CHN"],la:"Corea del Sud, EUA i ONU",lb:"Corea del Nord i Xina"},
+"Guerra d'Algèria":{a:["DZA"],b:["FRA"],la:"Independentistes algerians",lb:"França"},
+"Guerra del Vietnam":{c:["VNM","LAO","KHM"],b:["USA"],la:"Vietnam del Nord i Vietcong",lb:"Vietnam del Sud i EUA"},
+"Guerra civil de Guatemala":{c:["GTM"],la:"Guerrilles",lb:"Governs militars"},
+"Guerra de Biafra":{c:["NGA"],la:"Govern de Nigèria",lb:"Biafra"},
+"Guerra dels Sis Dies":{a:["ISR"],b:["EGY","SYR","JOR"],la:"Israel",lb:"Egipte, Síria i Jordània"},
+"Guerra d'independència de Bangladesh":{a:["BGD","IND"],b:["PAK"],la:"Bangladesh i Índia",lb:"Pakistan"},
+"Guerra del Yom Kippur":{a:["EGY","SYR"],b:["ISR"],la:"Egipte i Síria",lb:"Israel"},
+"Guerra civil del Líban":{c:["LBN"],la:"Milícies cristianes",lb:"Milícies musulmanes i palestines"},
+"Guerra soviètica de l'Afganistan":{a:["RUS","UKR","BLR","UZB","TJK","TKM","KAZ","KGZ"],c:["AFG"],la:"URSS i govern afganés",lb:"Mujahidins"},
+"Guerra de l'Iran i l'Iraq":{a:["IRQ"],b:["IRN"],la:"Iraq",lb:"Iran"},
+"Guerra de les Malvines":{a:["ARG"],b:["GBR"],la:"Argentina",lb:"Regne Unit"},
+"Guerra del Golf":{a:["USA","GBR","FRA","SAU","KWT","EGY","SYR"],b:["IRQ"],la:"Coalició internacional",lb:"Iraq"},
+"Guerres de Iugoslàvia":{c:["SRB","HRV","BIH","SVN","UNK","MKD","MNE"],la:"Repúbliques independentistes",lb:"Sèrbia i aliats"},
+"Guerra civil i genocidi de Ruanda":{c:["RWA"],la:"Front Patriòtic Ruandés",lb:"Govern hutu"},
+"Guerres de Txetxènia":{c:["RUS"],la:"Rússia",lb:"Txetxens"},
+"Segona Guerra del Congo":{a:["COD","AGO","ZWE","NAM"],b:["RWA","UGA","BDI"],la:"Congo i aliats",lb:"Ruanda, Uganda i rebels"},
+"Guerra de l'Afganistan (2001-2021)":{a:["USA","GBR","CAN","DEU","FRA","ITA","ESP","AUS"],c:["AFG"],la:"EUA, OTAN i govern afganés",lb:"Talibans"},
+"Guerra civil de Síria":{c:["SYR"],la:"Règim d'Assad",lb:"Rebels i altres"},
+"Guerra de l'Iraq":{a:["USA","GBR","AUS","ESP","POL"],b:["IRQ"],la:"EUA i aliats",lb:"Iraq de Saddam Hussein"}
+};
+const CF_PAL=[["#d62728","#1f77b4"],["#ff7f0e","#6a3d9a"],["#2ca02c","#8c564b"],["#e377c2","#17becf"],["#b8860b","#2f4f4f"],["#c51b7d","#4d9221"],["#e6550d","#3182bd"],["#756bb1","#d6604d"]];
+CFV.year=-499;CFV.speed=+store.get("mapa_cf_speed",10);CFV.skip=store.get("mapa_cf_skip",true);
+const cfStep=(y,d)=>{let n=y+d;if(y<0&&n>=0)n+=1;if(y>0&&n<=0)n-=1;return Math.max(-499,Math.min(2026,n));};
+const cfActive=y=>CF_HIST.filter(x=>CFV.cats.hist[x.p]&&x.s<=y&&y<=x.f).sort((a,b)=>a.s-b.s);
+function cfEvents(){const s=new Set();CF_HIST.forEach(x=>{if(CFV.cats.hist[x.p]){s.add(x.s);s.add(x.f+(x.f===-1?2:1));}});return [...s].sort((a,b)=>a-b);}
+function cfNextEvent(y,dir){const ev=cfEvents();if(dir>0){const n=ev.find(v=>v>y);return n===undefined?2026:n;}const p=ev.filter(v=>v<y);return p.length?p[p.length-1]:-499;}
+function cfEvolApply(){if(!CFV.cp)return;const y=Math.round(CFV.year);const act=cfActive(y);CFV.act=act;
+  Object.values(CFV.cp).forEach(p=>p.attr("fill","#f4f1e8"));
+  act.forEach((x,i)=>{const S=CF_SIDES[x.n]||{};const pal=CF_PAL[i%CF_PAL.length];x.slot=i%CF_PAL.length;
+    (S.a||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",pal[0]));(S.b||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",pal[1]));(S.c||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",`url(#cfpat${x.slot})`));});
+  if(CFV.badges){const ids=new Set(act.map(x=>x.i0));CFV.badges.style("display",d=>ids.has(d.i0)?null:"none").select(".agnm").style("visibility","visible");}
+  const yl=$("#cfyear");if(yl)yl.textContent=cfYear(y);const sl=$("#cfslider");if(sl&&document.activeElement!==sl)sl.value=y;
+  const box=$("#cfact");if(box)box.innerHTML=act.length?act.map(x=>{const S=CF_SIDES[x.n]||{};const pal=CF_PAL[x.slot];
+      return `<div class="cfev" data-i="${x.i0}"><b>${esc(x.n)}</b> <span class="small">(${cfYear(x.s)}${x.f!==x.s?"–"+cfYear(x.f):""})</span><div class="small cfsides"><span><i style="background:${pal[0]}"></i>${esc(S.la||"Bàndol 1")}</span><span><i style="background:${pal[1]}"></i>${esc(S.lb||"Bàndol 2")}</span>${S.c?`<span><i class="str" style="background:repeating-linear-gradient(45deg,${pal[0]} 0 4px,${pal[1]} 4px 8px)"></i>país dividit (guerra interna)</span>`:""}</div></div>`;}).join("")
+    :`<p class="small" style="opacity:.75">Cap guerra d'aquesta llista en l'any ${cfYear(y)}.</p>`;
+  if(box)box.querySelectorAll(".cfev").forEach(el=>el.onclick=()=>{cfPause();CFV.fitxa=+el.dataset.i;cfPaintSides(CF_HIST[CFV.fitxa]);const f=$("#cfevfx");if(f){f.innerHTML=cfFitxaHtml(CF_HIST[CFV.fitxa]);const c=$("#cffx");if(c)c.onclick=()=>{f.innerHTML="";cfEvolApply();};f.scrollIntoView({block:"nearest"});}});}
+function cfPlay(){if(CFV.ptm)return cfPause();if(Math.round(CFV.year)>=2026)CFV.year=-499;let last=performance.now();
+  CFV.ptm=setInterval(()=>{const now=performance.now(),dt=(now-last)/1000;last=now;let y=CFV.year+CFV.speed*dt;
+    if(CFV.year<0&&y>=0)y+=1;
+    if(CFV.skip&&!cfActive(Math.round(y)).length){y=cfNextEvent(Math.round(y),1);}
+    if(y>=2026){y=2026;CFV.year=y;cfEvolApply();cfPause();return;}CFV.year=y;cfEvolApply();},80);
+  const b=$("#cfplay");if(b)b.textContent="⏸ Pausa";}
+function cfPause(){clearInterval(CFV.ptm);CFV.ptm=null;const b=$("#cfplay");if(b)b.textContent="▶️ Reproduir";}
+function cfEvolSide(){return `<div class="card cfevol"><div class="cfyear" id="cfyear">${cfYear(Math.round(CFV.year))}</div>
+  <input type="range" id="cfslider" min="-499" max="2026" step="1" value="${Math.round(CFV.year)}">
+  <div class="row cfctl"><button class="btn sec" id="cfprev2" title="Guerra anterior">⏮</button><button class="btn sec" id="cfprev" title="Un any arrere">◀ 1</button><button class="btn" id="cfplay">▶️ Reproduir</button><button class="btn sec" id="cfnext" title="Un any avant">1 ▶</button><button class="btn sec" id="cfnext2" title="Guerra següent">⏭</button></div>
+  <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap"><label class="small">Velocitat: <select id="cfspeed">${[1,2,5,10,25,50,100].map(v=>`<option value="${v}" ${CFV.speed===v?"selected":""}>${v} ${v===1?"any":"anys"}/segon</option>`).join("")}</select></label>
+  <label class="small"><input type="checkbox" id="cfskip" ${CFV.skip?"checked":""}> Saltar els anys sense guerres</label></div>
+  <div class="small" style="margin-top:6px;opacity:.8">⏮ ⏭ salten al començament o final de guerra més pròxim. Les fronteres són les actuals (aproximació).</div></div>
+  <div id="cfevfx"></div><h3 style="margin-top:10px">Guerres en aquest any</h3><div id="cfact"></div>`;}
+function cfEvolBind(){const sl=$("#cfslider");if(!sl)return;
+  sl.oninput=()=>{cfPause();let v=+sl.value;if(v===0)v=1;CFV.year=v;cfEvolApply();};
+  $("#cfplay").onclick=cfPlay;
+  $("#cfprev").onclick=()=>{cfPause();CFV.year=cfStep(Math.round(CFV.year),-1);cfEvolApply();};
+  $("#cfnext").onclick=()=>{cfPause();CFV.year=cfStep(Math.round(CFV.year),1);cfEvolApply();};
+  $("#cfprev2").onclick=()=>{cfPause();CFV.year=cfNextEvent(Math.round(CFV.year),-1);cfEvolApply();};
+  $("#cfnext2").onclick=()=>{cfPause();CFV.year=cfNextEvent(Math.round(CFV.year),1);cfEvolApply();};
+  $("#cfspeed").onchange=e=>{CFV.speed=+e.target.value;store.set("mapa_cf_speed",CFV.speed);};
+  $("#cfskip").onchange=e=>{CFV.skip=e.target.checked;store.set("mapa_cf_skip",CFV.skip);};
+  cfEvolApply();}
+
+
+// ===== Bàndols dels conflictes actuals (països actuals) =====
+const CF_SIDES_NOW={
+"Guerra de Rússia i Ucraïna":{a:["UKR"],b:["RUS"],la:"Ucraïna",lb:"Rússia"},
+"Conflicte d'Armènia i l'Azerbaidjan":{a:["ARM"],b:["AZE"],la:"Armènia",lb:"Azerbaidjan"},
+"Xipre dividida":{c:["CYP"],b:["TUR"],la:"Grecoxipriotes",lb:"Turcoxipriotes i Turquia"},
+"Kosovo i Sèrbia":{a:["UNK"],b:["SRB"],la:"Kosovo",lb:"Sèrbia"},
+"Geòrgia: Abkhàzia i Ossètia del Sud":{c:["GEO"],b:["RUS"],la:"Geòrgia",lb:"Separatistes i Rússia"},
+"Transnístria (Moldàvia)":{c:["MDA"],la:"Moldàvia",lb:"Transnístria"},
+"Turquia i el PKK":{c:["TUR"],la:"Estat turc",lb:"PKK"},
+"Israel i Palestina (Gaza i Cisjordània)":{a:["ISR"],b:["PSE"],la:"Israel",lb:"Hamàs i grups palestins"},
+"Israel i Hezbol·lah (Líban)":{a:["ISR"],b:["LBN"],la:"Israel",lb:"Hezbol·lah (Líban)"},
+"Síria":{c:["SYR"],la:"Govern d'al-Sharaa",lb:"Grups armats i altres"},
+"Iemen":{a:["SAU"],c:["YEM"],la:"Govern i Aràbia Saudita",lb:"Huthis"},
+"Guerra de l'Iran amb els EUA i Israel":{a:["USA","ISR"],b:["IRN"],la:"EUA i Israel",lb:"Iran"},
+"Iraq":{c:["IRQ"],la:"Govern iraquià",lb:"Estat Islàmic i milícies"},
+"Líbia":{c:["LBY"],la:"Govern de Trípoli",lb:"Forces d'Haftar"},
+"Sàhara Occidental":{a:["MAR"],b:["DZA"],la:"Marroc",lb:"Front Polisari (amb base i suport d'Algèria)"},
+"Guerra del Sudan":{c:["SDN"],la:"Exèrcit (SAF)",lb:"Forces de Suport Ràpid (RSF)"},
+"Sudan del Sud":{c:["SSD"],la:"Govern de Kiir",lb:"Forces de Machar i milícies"},
+"Etiòpia (Tigrai, Amhara i Oròmia)":{c:["ETH"],b:["ERI"],la:"Govern etíop",lb:"TPLF, Fano, OLA (Eritrea acusada de suport)"},
+"Somàlia":{c:["SOM"],la:"Govern i Unió Africana",lb:"Al-Xabab"},
+"Est de la República Democràtica del Congo":{a:["COD"],b:["RWA"],la:"Govern congolés",lb:"M23 (amb suport de Ruanda, segons l'ONU)"},
+"Sahel central (Mali, Burkina Faso i Níger)":{c:["MLI","BFA","NER"],la:"Juntes militars",lb:"Gihadistes i rebels tuaregs"},
+"Conca del llac Txad (Boko Haram)":{c:["NGA","NER","TCD","CMR"],la:"Exèrcits de la zona",lb:"Boko Haram i ISWAP"},
+"Nigèria: bandolers i violència comunitària":{c:["NGA"],la:"Estat nigerià",lb:"Bandes armades"},
+"Camerun anglòfon (Ambazònia)":{c:["CMR"],la:"Govern del Camerun",lb:"Separatistes anglòfons"},
+"Burundi":{c:["BDI"],la:"Govern",lb:"Grups armats opositors"},
+"Somàlia: Somalilàndia i Las Anod":{c:["SOM"],la:"Somalilàndia",lb:"Milícies SSC-Khatumo"},
+"República Centreafricana":{c:["CAF"],la:"Govern",lb:"Grups armats"},
+"Moçambic (Cabo Delgado)":{a:["RWA"],c:["MOZ"],la:"Govern (amb tropes de Ruanda)",lb:"Insurgents de l'Estat Islàmic"},
+"Afganistan i Pakistan":{a:["PAK"],b:["AFG"],la:"Pakistan",lb:"Afganistan (talibans)"},
+"Balutxistan (Pakistan)":{c:["PAK"],la:"Estat pakistanés",lb:"Separatistes balutxis"},
+"Caixmir (Índia i Pakistan)":{a:["IND"],b:["PAK"],la:"Índia",lb:"Pakistan"},
+"Índia: insurgència naxalita":{c:["IND"],la:"Estat indi",lb:"Guerrilles maoistes"},
+"Myanmar":{c:["MMR"],la:"Junta militar",lb:"Resistència i guerrilles ètniques"},
+"Tailàndia i Cambodja":{a:["THA"],b:["KHM"],la:"Tailàndia",lb:"Cambodja"},
+"Sud de Tailàndia (Patani)":{c:["THA"],la:"Estat tailandés",lb:"Insurgents malais"},
+"Filipines (Mindanao i NPA)":{c:["PHL"],la:"Govern",lb:"NPA i grups de Mindanao"},
+"Papua Occidental":{c:["IDN"],la:"Indonèsia",lb:"Independentistes papús"},
+"Taiwan":{a:["TWN"],b:["CHN"],la:"Taiwan",lb:"Xina"},
+"Península de Corea":{a:["KOR"],b:["PRK"],la:"Corea del Sud",lb:"Corea del Nord"},
+"Mar de la Xina Meridional":{a:["PHL","VNM","MYS"],b:["CHN"],la:"Filipines, Vietnam i Malàisia",lb:"Xina"},
+"Colòmbia":{c:["COL"],la:"Estat colombià",lb:"ELN, dissidències i Clan del Golf"},
+"Haití":{c:["HTI"],la:"Policia i força internacional",lb:"Bandes armades"},
+"Mèxic: guerra contra els càrtels":{c:["MEX"],la:"Estat mexicà",lb:"Càrtels"},
+"Veneçuela":{a:["USA"],b:["VEN"],la:"Estats Units",lb:"Veneçuela"},
+"Equador: crim organitzat":{c:["ECU"],la:"Estat equatorià",lb:"Bandes del narcotràfic"}
+};
+const CF_SC=["#d62728","#1f77b4"];
+const cfSidesOf=x=>(CFV.set==="now"?CF_SIDES_NOW:CF_SIDES)[x.n];
+function cfPaintDefault(){if(!CFV.cp)return;if(CFV.mode==="evol")return cfEvolApply();Object.entries(CFV.cp).forEach(([k,p])=>p.attr("fill",CFV.cpDef[k]));CFV.painted=null;}
+function cfPaintSides(x){if(!CFV.cp||!x)return;const S=cfSidesOf(x);if(!S)return;Object.values(CFV.cp).forEach(p=>p.attr("fill","#f4f1e8"));
+  (S.c||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill","url(#cfsidepat)"));(S.a||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",CF_SC[0]));(S.b||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",CF_SC[1]));CFV.painted=x.i0;
+  if(CFV.badges&&CFV.mode==="evol"){CFV.badges.style("display",d=>d.i0===x.i0?null:"none");}
+  try{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;[...(S.a||[]),...(S.b||[]),...(S.c||[])].forEach(k=>{const f=featBy[k];if(!f||!CFV.path)return;let g=f.geometry||f;if(g.type==="MultiPolygon"){let best=null,ba=-1;g.coordinates.forEach(pl=>{const a=d3.geoArea({type:"Polygon",coordinates:pl});if(a>ba){ba=a;best=pl;}});g={type:"Polygon",coordinates:best};}
+      const bb=CFV.path.bounds(g);x0=Math.min(x0,bb[0][0]);y0=Math.min(y0,bb[0][1]);x1=Math.max(x1,bb[1][0]);y1=Math.max(y1,bb[1][1]);});
+    if(x1>x0){const v=$("#cfview"),w=v.clientWidth,h=v.clientHeight;const k=Math.max(1,Math.min(7,0.8*Math.min(w/(x1-x0),h/(y1-y0))));
+      CFV.svg.transition().duration(700).call(CFV.zoom.transform,k<1.25?d3.zoomIdentity:d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2));}}catch(_){}}
+function cfSidesHtml(x){const S=cfSidesOf(x);if(!S)return"";return `<div class="cfsides cfsidesbig"><span><i style="background:${CF_SC[0]}"></i>${esc(S.la)}</span><span><i style="background:${CF_SC[1]}"></i>${esc(S.lb)}</span>${S.c?`<span><i style="background:repeating-linear-gradient(45deg,${CF_SC[0]} 0 4px,${CF_SC[1]} 4px 8px)"></i>país dividit entre els dos bàndols</span>`:""}</div>`;}
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
