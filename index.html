@@ -242,7 +242,7 @@ body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
 .agb .agbn{font:800 10px system-ui,sans-serif;fill:#173a5e;pointer-events:none}.agb .agnm{font:700 12px system-ui,sans-serif;fill:#1d2b38;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none}
 .agb.ok .agbc{fill:#2e9e5b;stroke:#1d6e3e}.agb.ok .agbn{fill:#fff}.agb.ok .agnm{fill:#1d6e3e}.agb.bad .agbc{fill:#fbd5d1;stroke:#c0392b}
 .agb.hl .agbc{fill:#ffd84d;stroke:#e2574c;stroke-width:3.5}.agb.shake{animation:agsh .45s}@keyframes agsh{0%,100%{opacity:1}25%,75%{opacity:.2}50%{opacity:1}}
-.agcan{font:700 11px system-ui,sans-serif;fill:#4a5a6a}#cfview{position:absolute;inset:0;z-index:31;background:#d7e9f5;display:none;touch-action:none;user-select:none;-webkit-user-select:none}#cfview svg{width:100%;height:100%;display:block}
+.agcan{font:700 11px system-ui,sans-serif;fill:#4a5a6a}#cfview{position:absolute;inset:0;z-index:31;background:#d7e9f5;display:none;touch-action:none;user-select:none;-webkit-user-select:none}#cfview svg{width:100%;height:100%;display:block}.cfed textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;border:1px solid var(--cardline);border-radius:8px;padding:6px;margin:2px 0 8px;resize:vertical;background:var(--card);color:inherit;user-select:text;-webkit-user-select:text}
 .agmsgx{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#173a5e;color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:14px;z-index:7;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:80%;text-align:center;pointer-events:none}.agmsgx.ok{background:#2e9e5b}.agmsgx.bad{background:#c0392b}
 #cflegend{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);border-radius:8px;padding:5px 8px;font-size:11px;z-index:5;color:#223;pointer-events:none}#cflegend div{display:flex;align-items:center;gap:5px;line-height:1.5}#cflegend span{width:11px;height:11px;border-radius:3px;display:inline-block}@media (max-width:620px){#cflegend{display:none}}
 .cfrow{display:flex;gap:8px;align-items:center;padding:6px;border-radius:8px;cursor:pointer;border:1px solid transparent}.cfrow:hover,.cfrow.on{background:rgba(127,127,127,.12);border-color:var(--cardline)}.cfrt{flex:1;min-width:0}
@@ -3470,6 +3470,35 @@ function cfHPaint(){if(!CFV.hp||CFV.mode!=="evol")return;const one=CFV.painted!=
   CFV.hp.attr("fill",function(){return fill.get(this)||"#f4f1e8";});
   if(one){try{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;fill.forEach((v,node)=>{const b=node.getBBox();if(b.width*b.height<0.5)return;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height);});
     if(x1>x0){const vw=$("#cfview"),w=vw.clientWidth,h=vw.clientHeight;const k=Math.max(1,Math.min(7,0.8*Math.min(w/(x1-x0),h/(y1-y0))));CFV.svg.transition().duration(700).call(CFV.zoom.transform,k<1.25?d3.zoomIdentity:d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2));}}catch(_){}}}
+
+// ===== Conflictes: editar textos =====
+const CFE=(()=>{try{return JSON.parse(localStorage.getItem("mapa_cf_edit")||"{}");}catch(_){return {};}})();
+const cfESave=()=>{try{localStorage.setItem("mapa_cf_edit",JSON.stringify(CFE));}catch(_){}};
+const cfKey=x=>(CF_NOW.includes(x)?"now":"hist")+":"+x.n;
+const cfEF=x=>CF_NOW.includes(x)?[["qui","👥 Qui hi participa",2],["o","📖 Origen del conflicte",7],["e","📍 Estat actual",7]]:[["qui","👥 Bàndols",2],["d","📖 Què va passar",8],["m","✝️ Morts aproximades",1]];
+{const _fx=cfFitxaHtml;cfFitxaHtml=function(x){const k=cfKey(x),ov=CFE[k];
+  if(CFV.editK===k){return `<div class="card cffitxa cfed" style="border-left:5px solid ${cfCol(x)}"><div class="row" style="justify-content:space-between;gap:8px"><h3 style="margin:0">✏️ ${x.num}. ${esc(x.n)}</h3><button class="closex" id="cffx" title="Tancar">×</button></div>
+   <p class="small" style="margin:4px 0">Escriu el text com vulgues. Es guarda en este navegador.</p>
+   ${cfEF(x).map(([f,l,r])=>`<label class="small"><b>${l}</b></label><textarea data-f="${f}" rows="${r}">${esc(ov&&ov[f]!=null?ov[f]:(x[f]||""))}</textarea>`).join("")}
+   <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><button class="btn cfedsave" data-k="${esc(k)}">💾 Guardar</button><button class="btn sec cfedcancel">Cancel·lar</button></div></div>`;}
+  const y=ov?Object.assign({},x,ov):x;const h=_fx(y);
+  const bar=`<div class="row cfedrow" style="gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center"><button class="btn sec small cfedit" data-k="${esc(k)}">✏️ Editar el text</button>${ov?`<span class="small">✏️ Text modificat per tu</span><button class="btn sec small cfedreset" data-k="${esc(k)}">↩️ Tornar a l'original</button>`:""}</div>`;
+  return h.replace(/<\/div>\s*$/,bar+"</div>");};}
+function cfEItem(k){const [s,...n]=k.split(":");const nm=n.join(":");return (s==="now"?CF_NOW:CF_HIST).find(x=>x.n===nm);}
+function cfERedraw(x){if(CFV.mode==="evol"){const f=$("#cfevfx");if(f){f.innerHTML=cfFitxaHtml(x);const c=$("#cffx");if(c)c.onclick=()=>{CFV.editK=null;f.innerHTML="";cfEvolApply();};}}else cfSide(true);}
+side.addEventListener("click",e=>{if(tab!=="conflicts")return;const b=e.target.closest(".cfedit,.cfedsave,.cfedcancel,.cfedreset,#cfexp,#cfimp");if(!b)return;e.stopPropagation();
+  if(b.id==="cfexp"){const bl=new Blob([JSON.stringify(CFE,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download="conflictes_textos.json";document.body.appendChild(a);a.click();a.remove();return;}
+  if(b.id==="cfimp"){const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";inp.onchange=()=>{const f=inp.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);let n=0;Object.entries(d).forEach(([k,v])=>{if(cfEItem(k)&&v&&typeof v==="object"){CFE[k]=v;n++;}});cfESave();cfSide(true);cfMsg("📂 "+n+" textos importats","ok");}).catch(()=>cfMsg("❌ El fitxer no és vàlid","bad"));};inp.click();return;}
+  if(b.classList.contains("cfedcancel")){const x=cfEItem(CFV.editK);CFV.editK=null;if(x)cfERedraw(x);return;}
+  const k=b.dataset.k,x=cfEItem(k);if(!x)return;
+  if(b.classList.contains("cfedit")){CFV.editK=k;cfERedraw(x);const t=side.querySelector(".cfed textarea");if(t)t.focus({preventScroll:true});return;}
+  if(b.classList.contains("cfedreset")){if(!confirm("Vols tornar al text original d'este conflicte?"))return;delete CFE[k];cfESave();cfERedraw(x);return;}
+  if(b.classList.contains("cfedsave")){const ov={};b.closest(".cfed").querySelectorAll("textarea").forEach(t=>{const f=t.dataset.f,v=t.value.trim();if(v!==(x[f]||"").trim())ov[f]=v;});
+    if(Object.keys(ov).length)CFE[k]=ov;else delete CFE[k];cfESave();CFV.editK=null;cfERedraw(x);cfMsg("💾 Guardat","ok");}},true);
+{const _cs=cfSide;cfSide=function(keep){if(CFV.editK&&(CFV.mode!=="vore"||CFV.fitxa==null||cfKey(cfData()[CFV.fitxa])!==CFV.editK))CFV.editK=null;const st=side.scrollTop;_cs.apply(this,arguments);
+  const n=Object.keys(CFE).length;side.insertAdjacentHTML("beforeend",`<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center"><span class="small">✏️ Textos editats: <b>${n}</b></span><button class="btn sec small" id="cfexp" ${n?"":"disabled title=\"Encara no has editat cap text\""}>💾 Exportar JSON</button><button class="btn sec small" id="cfimp">📂 Importar JSON</button></div>`);
+  const fx=$("#cffx");if(fx&&CFV.editK){fx.onclick=()=>{CFV.editK=null;CFV.fitxa=null;CFV.hl=null;cfRefresh();cfSide(true);};}
+  if(keep)side.scrollTop=st;};}
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
