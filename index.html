@@ -2768,7 +2768,7 @@ function agSide(keep){const st=keep?side.scrollTop:0;const its=agIts();const m=A
   side.scrollTop=st;
   $("#agback").onclick=()=>agClose();
   side.querySelectorAll("#agmode button").forEach(b=>b.onclick=()=>{AGV.mode=b.dataset.v;agStart();});
-  side.querySelectorAll(".agcat").forEach(b=>b.onclick=()=>{const c=b.dataset.c;AGV.cats[c]=!AGV.cats[c];if(!Object.values(AGV.cats).some(Boolean))AGV.cats[c]=true;store.set("mapa_ag_cats",AGV.cats);agStart();});
+  side.querySelectorAll(".agcat").forEach(b=>b.onclick=()=>{const st=side.scrollTop;const c=b.dataset.c;AGV.cats[c]=!AGV.cats[c];if(!Object.values(AGV.cats).some(Boolean))AGV.cats[c]=true;store.set("mapa_ag_cats",AGV.cats);agStart();side.scrollTop=st;});
   side.querySelectorAll(".agli").forEach(el=>el.onclick=()=>{const i=+el.dataset.i;agFocus(i,true);agSide(true);});
   if(m==="facil")side.querySelectorAll(".agdrag").forEach(agDragBind);
   if(m==="dificil"){side.querySelectorAll(".agrow input").forEach(inp=>{const i=+inp.dataset.i;inp.onfocus=()=>{AGV.hl=i;agRefresh();};inp.oninput=()=>{AGV.ans[i]=inp.value;};inp.onkeydown=e=>{if(e.key==="Enter"){const all=[...side.querySelectorAll(".agrow input:not([disabled])")];const n=all[all.indexOf(inp)+1];if(n)n.focus();}};});
@@ -3166,7 +3166,8 @@ function cfSide(keep){const st=keep?side.scrollTop:0;const its=cfIts();const m=C
   side.querySelectorAll("#cfset button").forEach(b=>b.onclick=()=>{CFV.set=b.dataset.v;if(CFV.set==="now"&&CFV.mode==="evol")CFV.mode="vore";if(CFV.set==="hist"&&CFV.mode==="vore")CFV.sort="date";cfStart();});
   side.querySelectorAll("#cfmode button").forEach(b=>b.onclick=()=>{CFV.mode=b.dataset.v;cfStart();});
   side.querySelectorAll("#cfsort button").forEach(b=>b.onclick=()=>{CFV.sort=b.dataset.v;cfSide(true);});
-  side.querySelectorAll(".cfcat").forEach(b=>b.onclick=()=>{const c=b.dataset.c,C=CFV.cats[CFV.set];C[c]=!C[c];if(!Object.values(C).some(Boolean))C[c]=true;cfStart();});
+  side.querySelectorAll("#cfmode button").forEach(b=>{const f=b.onclick;b.onclick=()=>{const st=side.scrollTop;f();side.scrollTop=st;};});
+  side.querySelectorAll(".cfcat").forEach(b=>b.onclick=()=>{const st=side.scrollTop;const c=b.dataset.c,C=CFV.cats[CFV.set];C[c]=!C[c];if(!Object.values(C).some(Boolean))C[c]=true;cfStart();side.scrollTop=st;});
   side.querySelectorAll(".cfrow").forEach(el=>el.onclick=ev=>{const i=+el.dataset.i;if(ev.target.closest(".cfeye")){ev.stopPropagation();cfToggleVis(i);return;}
     if(!cfVis(cfData()[i])){cfToggleVis(i,true);if(CFV.badges)CFV.badges.style("display",d=>cfVis(d)?null:"none");}CFV.fitxa=i;cfFocus(i,true);cfSide();side.scrollTop=0;});
   side.querySelectorAll(".cfevpick .cfeye").forEach(el=>el.onclick=()=>cfToggleVis(+el.dataset.i));
