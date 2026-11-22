@@ -2682,7 +2682,7 @@ const AG_OFF={"Pic Mont Perdut":[-13,12,1],"Serra Picos de Urbión":[0,0,1],"Cap
 const agNorm=s=>(" "+s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`´·.,\-]/g," ")+" ").replace(/\b(riu|rio|riu|serralada|serralades|serrania|sistema|cordillera|muntanyes|muntanya|montes|monts|serra|serres|sierra|massis|macizo|cap|cabo|pic|pico|picos|pics|golf|golfo|de|del|dels|d|l|la|les|el|els|lo|los|las|i)\b/g," ").replace(/\s+/g," ").trim();
 function agLev(a,b){if(Math.abs(a.length-b.length)>2)return 9;const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];}for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length];}
 function agOk(it,txt){const t=agNorm(txt);if(!t)return false;const cands=[agNorm(it.n),...it.al.map(agNorm)];return cands.some(c=>c===t||(c.length>=5&&agLev(c,t)<=1));}
-const AGV={on:false,mode:"vore",cats:Object.assign(Object.fromEntries(AG_CAT.map(c=>[c[0],true])),store.get("mapa_ag_cats",{})),k:1};
+const AGV={on:false,mode:"vore",sort:store.get("mapa_ag_sort","tipus"),cats:Object.assign(Object.fromEntries(AG_CAT.map(c=>[c[0],true])),store.get("mapa_ag_cats",{})),k:1};
 const agIts=()=>AG.filter(it=>AGV.cats[it.k]);
 function agOpen(mode){AGV.mode=mode;AGV.tab=tab;AGV.on=true;if(typeof CV!=="undefined"&&CV.on){CV.on=false;const c=$("#cityview");if(c)c.style.display="none";}
   let w=$("#agview");if(!w){w=document.createElement("div");w.id="agview";$("#mapwrap").appendChild(w);
@@ -2753,11 +2753,16 @@ function agSide(keep){const st=keep?side.scrollTop:0;const its=agIts();const m=A
   const modes=`<div class="seg" id="agmode">${[["vore","👀 Vore'ls tots"],["facil","🟢 Fàcil"],["dificil","🔴 Difícil"]].map(([v,t])=>`<button data-v="${v}" class="${m===v?"on":""}">${t}</button>`).join("")}</div>`;
   const cats=`<div class="small" style="margin-top:8px"><b>Què vols practicar?</b></div><div style="margin-top:4px">${AG_CAT.map(c=>`<span class="chip agcat ${AGV.cats[c[0]]?"on":""}" data-c="${c[0]}" style="${AGV.cats[c[0]]?`background:${c[3]};color:#fff;border-color:${c[3]}`:""}">${c[1]} ${c[2]} ${AG.filter(x=>x.k===c[0]).length}</span>`).join("")}</div>`;
   let body="";
-  if(m==="vore"){body=`<p class="hint" style="display:block">Toca un número del mapa o un nom de la llista per a vore on és.</p>`+AG_CAT.filter(c=>AGV.cats[c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3><div>${its.filter(x=>x.k===c[0]).map(x=>`<span class="chip go agli ${AGV.hl===x.i?"on":""}" data-i="${x.i}"><b>${x.num}</b> ${esc(x.n)}</span>`).join("")}</div>`).join("");}
+  const srt=AGV.sort||"tipus";const sortSeg=`<div class="row" style="gap:6px;margin:8px 0;align-items:center"><span class="small">Ordenar:</span><div class="seg" id="agsort">${[["tipus","🗂️ Per tipus"],["alfa","🔤 Alfabètic"]].concat(m==="facil"?[["mix","🔀 Barrejat"]]:[]).map(([v,t])=>`<button data-v="${v}" class="${srt===v?"on":""}">${t}</button>`).join("")}</div></div>`;
+  const agAlpha=arr=>arr.slice().sort((a,b)=>agNorm(AG[a].n).localeCompare(agNorm(AG[b].n),"ca"));
+  if(m==="vore"){const chip=x=>`<span class="chip go agli ${AGV.hl===x.i?"on":""}" data-i="${x.i}"><b>${x.num}</b> ${AG_CM[x.k][1]} ${esc(x.n)}</span>`;
+    body=`<p class="hint" style="display:block">Toca un número del mapa o un nom de la llista per a vore on és.</p>`+sortSeg+(srt==="alfa"?`<div>${agAlpha(its.map(x=>x.i)).map(i=>chip(AG[i])).join("")}</div>`:AG_CAT.filter(c=>AGV.cats[c[0]]).map(c=>`<h3 style="margin-top:10px">${c[1]} ${c[2]}</h3><div>${its.filter(x=>x.k===c[0]).map(chip).join("")}</div>`).join(""));}
   else if(m==="facil"){const left=AGV.pool.filter(i=>!AGV.done[i]);
     body=`<div class="row" style="justify-content:space-between;margin-top:8px"><span><b>✅ ${Object.keys(AGV.done).length} / ${its.length}</b> · ❌ ${AGV.err}</span><span>⏱️ <span id="agtime">${agClock()}</span></span></div>
     <p class="small" style="margin:6px 0">Arrossega cada nom fins al seu número del mapa. També pots tocar un nom i després el número.</p><div id="agend"></div>
-    <div id="agchips">${left.map(i=>`<span class="chip agdrag ${AGV.sel===i?"on":""}" data-i="${i}">${AG_CM[AG[i].k][1]} ${esc(AG[i].n)}</span>`).join("")}</div>`;}
+    ${sortSeg}<div id="agchips">${(()=>{const ch=i=>`<span class="chip agdrag ${AGV.sel===i?"on":""}" data-i="${i}">${AG_CM[AG[i].k][1]} ${esc(AG[i].n)}</span>`;
+      if(srt==="mix")return left.map(ch).join("");if(srt==="alfa")return agAlpha(left).map(ch).join("");
+      return AG_CAT.map(c=>{const l=left.filter(i=>AG[i].k===c[0]);return l.length?`<div class="small" style="margin:6px 0 2px;font-weight:700">${c[1]} ${c[2]}</div>${agAlpha(l).map(ch).join("")}`:"";}).join("");})()}</div>`;}
   else{const nOk=AGV.res?Object.values(AGV.res).filter(v=>v===1).length:0;
     body=`<p class="small" style="margin:6px 0">Escriu el nom de cada número. No cal posar «Riu», «Cap», «Serra»…, i els accents no compten. Toca un número del mapa per a anar a la seua casella.</p>
     ${AGV.checked?`<div class="card" style="margin:6px 0"><b>Resultat: ${nOk} / ${its.length}</b>${nOk===its.length?" 🎉 Perfecte!":""}</div>`:""}
@@ -2768,6 +2773,7 @@ function agSide(keep){const st=keep?side.scrollTop:0;const its=agIts();const m=A
   side.scrollTop=st;
   $("#agback").onclick=()=>agClose();
   side.querySelectorAll("#agmode button").forEach(b=>b.onclick=()=>{AGV.mode=b.dataset.v;agStart();});
+  side.querySelectorAll("#agsort button").forEach(b=>b.onclick=()=>{AGV.sort=b.dataset.v;store.set("mapa_ag_sort",AGV.sort);agSide(true);});
   side.querySelectorAll(".agcat").forEach(b=>b.onclick=()=>{const st=side.scrollTop;const c=b.dataset.c;AGV.cats[c]=!AGV.cats[c];if(!Object.values(AGV.cats).some(Boolean))AGV.cats[c]=true;store.set("mapa_ag_cats",AGV.cats);agStart();side.scrollTop=st;});
   side.querySelectorAll(".agli").forEach(el=>el.onclick=()=>{const i=+el.dataset.i;agFocus(i,true);agSide(true);});
   if(m==="facil")side.querySelectorAll(".agdrag").forEach(agDragBind);
@@ -3087,10 +3093,11 @@ function cfDraw(){const w0=$("#cfview");if(!w0||!w0.clientWidth)return;const w=w
   const hi={};if(CFV.set==="now")cfIts().forEach(x=>(x.iso||[]).forEach(k=>{hi[k]=Math.max(hi[k]??-1,x.i);}));
   const defs=svg.append("defs");CF_PAL.forEach((pl,i)=>{const pt=defs.append("pattern").attr("id","cfpat"+i).attr("patternUnits","userSpaceOnUse").attr("width",3.2).attr("height",3.2).attr("patternTransform","rotate(45)");pt.append("rect").attr("width",3.2).attr("height",3.2).attr("fill",pl[1]);pt.append("rect").attr("width",1.6).attr("height",3.2).attr("fill",pl[0]);});
   {const pt=defs.append("pattern").attr("id","cfsidepat").attr("patternUnits","userSpaceOnUse").attr("width",3.2).attr("height",3.2).attr("patternTransform","rotate(45)");pt.append("rect").attr("width",3.2).attr("height",3.2).attr("fill",CF_SC[1]);pt.append("rect").attr("width",1.6).attr("height",3.2).attr("fill",CF_SC[0]);}
-  CFV.cp={};COUNTRIES.forEach(c=>{const f=featBy[c.id];if(!f||c.id==="ATA")return;const v=hi[c.id];
-    CFV.cp[c.id]=g.append("path").attr("d",path(f)).attr("fill",v===undefined?"#f4f1e8":d3.interpolateRgb("#f4f1e8",CF_INT[v][1])(0.55)).attr("stroke","#b9b2a0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");});
+  const gC=g.append("g");CFV.gC=gC;CFV.cp={};COUNTRIES.forEach(c=>{const f=featBy[c.id];if(!f||c.id==="ATA")return;const v=hi[c.id];
+    CFV.cp[c.id]=gC.append("path").attr("d",path(f)).attr("fill",v===undefined?"#f4f1e8":d3.interpolateRgb("#f4f1e8",CF_INT[v][1])(0.55)).attr("stroke","#b9b2a0").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");});
   CFV.cpDef={};Object.entries(CFV.cp).forEach(([k,p])=>CFV.cpDef[k]=p.attr("fill"));
   const its=cfIts();its.forEach(x=>{x.ap=pr(x.c);});
+  CFV.hg=g.append("g");CFV.hsy=null;CFV.hp=null;CFV.hload=null;
   const gB=g.append("g");
   CFV.badges=gB.selectAll("g.agb").data(its,d=>d.i0).join("g").attr("class","agb cfb").style("cursor","pointer");
   CFV.badges.each(function(d){const b=d3.select(this);const c=cfCol(d);
@@ -3267,7 +3274,7 @@ const cfStep=(y,d)=>{let n=y+d;if(y<0&&n>=0)n+=1;if(y>0&&n<=0)n-=1;return Math.m
 const cfActive=y=>CF_HIST.filter(x=>CFV.cats.hist[x.p]&&(!CFV.vis.hist||CFV.vis.hist.has(x.i0))&&x.s<=y&&y<=x.f).sort((a,b)=>a.s-b.s);
 function cfEvents(){const s=new Set();CF_HIST.forEach(x=>{if(CFV.cats.hist[x.p]){s.add(x.s);s.add(x.f+(x.f===-1?2:1));}});return [...s].sort((a,b)=>a-b);}
 function cfNextEvent(y,dir){const ev=cfEvents();if(dir>0){const n=ev.find(v=>v>y);return n===undefined?2026:n;}const p=ev.filter(v=>v<y);return p.length?p[p.length-1]:-499;}
-function cfEvolApply(){if(!CFV.cp)return;const y=Math.round(CFV.year);const act=cfActive(y);CFV.act=act;
+function cfEvolApply(){if(!CFV.cp)return;CFV.painted=null;const y=Math.round(CFV.year);const act=cfActive(y);CFV.act=act;
   Object.values(CFV.cp).forEach(p=>p.attr("fill","#f4f1e8"));
   act.forEach((x,i)=>{const S=CF_SIDES[x.n]||{};const pal=CF_PAL[i%CF_PAL.length];x.slot=i%CF_PAL.length;
     (S.a||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",pal[0]));(S.b||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",pal[1]));(S.c||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",`url(#cfpat${x.slot})`));});
@@ -3276,6 +3283,7 @@ function cfEvolApply(){if(!CFV.cp)return;const y=Math.round(CFV.year);const act=
   const box=$("#cfact");if(box)box.innerHTML=act.length?act.map(x=>{const S=CF_SIDES[x.n]||{};const pal=CF_PAL[x.slot];
       return `<div class="cfev" data-i="${x.i0}"><b>${esc(x.n)}</b> <span class="small">(${cfYear(x.s)}${x.f!==x.s?"–"+cfYear(x.f):""})</span><div class="small cfsides"><span><i style="background:${pal[0]}"></i>${esc(S.la||"Bàndol 1")}</span><span><i style="background:${pal[1]}"></i>${esc(S.lb||"Bàndol 2")}</span>${S.c?`<span><i class="str" style="background:repeating-linear-gradient(45deg,${pal[0]} 0 4px,${pal[1]} 4px 8px)"></i>país dividit (guerra interna)</span>`:""}</div></div>`;}).join("")
     :`<p class="small" style="opacity:.75">Cap guerra d'aquesta llista en l'any ${cfYear(y)}.</p>`;
+  cfHUpdate();
   if(box)box.querySelectorAll(".cfev").forEach(el=>el.onclick=()=>{cfPause();CFV.fitxa=+el.dataset.i;cfPaintSides(CF_HIST[CFV.fitxa]);const f=$("#cfevfx");if(f){f.innerHTML=cfFitxaHtml(CF_HIST[CFV.fitxa]);const c=$("#cffx");if(c)c.onclick=()=>{f.innerHTML="";cfEvolApply();};f.scrollIntoView({block:"nearest"});}});}
 function cfPlay(){if(CFV.ptm)return cfPause();if(Math.round(CFV.year)>=2026)CFV.year=-499;let last=performance.now();
   CFV.ptm=setInterval(()=>{const now=performance.now(),dt=(now-last)/1000;last=now;let y=CFV.year+CFV.speed*dt;
@@ -3289,7 +3297,7 @@ function cfEvolSide(){return `<div class="card cfevol"><div class="cfyear" id="c
   <div class="row cfctl"><button class="btn sec" id="cfprev2" title="Guerra anterior">⏮</button><button class="btn sec" id="cfprev" title="Un any arrere">◀ 1</button><button class="btn" id="cfplay">▶️ Reproduir</button><button class="btn sec" id="cfnext" title="Un any avant">1 ▶</button><button class="btn sec" id="cfnext2" title="Guerra següent">⏭</button></div>
   <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap"><label class="small">Velocitat: <select id="cfspeed">${[1,2,5,10,25,50,100].map(v=>`<option value="${v}" ${CFV.speed===v?"selected":""}>${v} ${v===1?"any":"anys"}/segon</option>`).join("")}</select></label>
   <label class="small"><input type="checkbox" id="cfskip" ${CFV.skip?"checked":""}> Saltar els anys sense guerres</label></div>
-  <div class="small" style="margin-top:6px;opacity:.8">⏮ ⏭ salten al començament o final de guerra més pròxim. Les fronteres són les actuals (aproximació).</div></div>
+  <div class="small" style="margin-top:6px;opacity:.8">⏮ ⏭ salten al començament o final de guerra més pròxim.</div><div class="small" id="cfmapinfo" style="margin-top:6px"></div></div>
   <div id="cfevfx"></div><h3 style="margin-top:10px">Guerres en aquest any</h3><div id="cfact"></div>
   <details class="cfevpick" ${CFV.vis.hist?"open":""}><summary><b>👁️ Triar quines guerres es mostren</b> (${CF_HIST.filter(x=>CFV.cats.hist[x.p]&&cfVis(x)).length} de ${cfIts().length})</summary>${cfIts().slice().sort((a,b)=>a.s-b.s).map(x=>`<div class="cfpickrow ${cfVis(x)?"":"off"}">${cfEye(x)} <span>${x.num}. ${esc(x.n)} <span class="small">(${cfYear(x.s)}${x.f!==x.s?"–"+cfYear(x.f):""})</span></span></div>`).join("")}</details>`;}
 function cfEvolBind(){const sl=$("#cfslider");if(!sl)return;
@@ -3357,12 +3365,111 @@ const cfSidesOf=x=>(CFV.set==="now"?CF_SIDES_NOW:CF_SIDES)[x.n];
 function cfPaintDefault(){if(!CFV.cp)return;if(CFV.mode==="evol")return cfEvolApply();Object.entries(CFV.cp).forEach(([k,p])=>p.attr("fill",CFV.cpDef[k]));CFV.painted=null;}
 function cfPaintSides(x){if(!CFV.cp||!x)return;const S=cfSidesOf(x);if(!S)return;Object.values(CFV.cp).forEach(p=>p.attr("fill","#f4f1e8"));
   (S.c||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill","url(#cfsidepat)"));(S.a||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",CF_SC[0]));(S.b||[]).forEach(k=>CFV.cp[k]&&CFV.cp[k].attr("fill",CF_SC[1]));CFV.painted=x.i0;
-  if(CFV.badges&&CFV.mode==="evol"){CFV.badges.style("display",d=>d.i0===x.i0?null:"none");}
+  if(CFV.badges&&CFV.mode==="evol"){CFV.badges.style("display",d=>d.i0===x.i0?null:"none");if(CFV.hp){cfHPaint();return;}}
   try{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;[...(S.a||[]),...(S.b||[]),...(S.c||[])].forEach(k=>{const f=featBy[k];if(!f||!CFV.path)return;let g=f.geometry||f;if(g.type==="MultiPolygon"){let best=null,ba=-1;g.coordinates.forEach(pl=>{const a=d3.geoArea({type:"Polygon",coordinates:pl});if(a>ba){ba=a;best=pl;}});g={type:"Polygon",coordinates:best};}
       const bb=CFV.path.bounds(g);x0=Math.min(x0,bb[0][0]);y0=Math.min(y0,bb[0][1]);x1=Math.max(x1,bb[1][0]);y1=Math.max(y1,bb[1][1]);});
     if(x1>x0){const v=$("#cfview"),w=v.clientWidth,h=v.clientHeight;const k=Math.max(1,Math.min(7,0.8*Math.min(w/(x1-x0),h/(y1-y0))));
       CFV.svg.transition().duration(700).call(CFV.zoom.transform,k<1.25?d3.zoomIdentity:d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2));}}catch(_){}}
 function cfSidesHtml(x){const S=cfSidesOf(x);if(!S)return"";return `<div class="cfsides cfsidesbig"><span><i style="background:${CF_SC[0]}"></i>${esc(S.la)}</span><span><i style="background:${CF_SC[1]}"></i>${esc(S.lb)}</span>${S.c?`<span><i style="background:repeating-linear-gradient(45deg,${CF_SC[0]} 0 4px,${CF_SC[1]} 4px 8px)"></i>país dividit entre els dos bàndols</span>`:""}</div>`;}
+
+
+// Bàndols amb els estats de l'època (expressions sobre els noms de Historical Basemaps: «nom [sobirà]»)
+const CF_HSIDES={
+"Guerres Mèdiques":{a:"greek city-states|greek colonies",b:"achaemenid"},
+"Guerra del Peloponès":{c:"greek city-states"},
+"Conquestes d'Alexandre el Gran":{a:"macedon|empire of alexander|greek city-states",b:"achaemenid"},
+"Guerres dels Regnes Combatents":{a:"^qin$",c:"zhou states"},
+"Guerres Púniques":{a:"^rome$|roman republic",b:"carthag"},
+"Guerra de les Gàl·lies":{a:"^rome$|roman republic",b:"^celts$|gaul"},
+"Conquesta romana d'Hispània":{a:"^rome$|roman republic|roman empire",b:"^celts$|\\biber|lusitan|cantab|astur"},
+"Reconquesta":{a:"castil|leon|navarr|aragon|portugal|asturias|visigoth",b:"umayyad|cordob|almoravid|almohad|granada|taifa|andalus|c[oó]rdob"},
+"Croades":{a:"jerusalem|crusader|antioch|edessa|county of tripoli|holy roman|kingdom of france|^france|^england|angevin",b:"fatimid|seljuk|ayyubid|abbasid|mamluk"},
+"Conquestes mongoles":{a:"mongol|great khanate|golden horde|ilkhanate|chagatai",b:"song|^jin|xixia|khwarazm|abbasid|rus principal|^korea|hungary|poland|bulgar|georgia|cuman|kievan"},
+"Guerra dels Cent Anys":{a:"^england|english territory|angevin",b:"^france$|kingdom of france"},
+"Germanies":{c:"^spain|castil|aragon"},
+"Conquesta de l'Imperi asteca":{a:"castil|^spain|hispaniola|cuba \\(spain\\)",b:"aztec"},
+"Guerres de religió de França":{c:"^france$"},
+"Conquesta de l'Imperi inca":{a:"castil|^spain|new spain|viceroyalty of peru",b:"inca"},
+"Guerra dels Vuitanta Anys":{a:"dutch republic|united provinces",b:"^spain|habsburg netherlands"},
+"Guerra dels Trenta Anys":{a:"sweden|^france$|dutch republic|denmark",b:"^spain|austrian|habsburg netherlands",c:"holy roman"},
+"Guerra dels Segadors":{a:"^france$",c:"^spain"},
+"Guerra Civil anglesa":{c:"^england"},
+"Guerra de Successió Espanyola":{a:"^france$",b:"^england|united kingdom|dutch republic|austrian empire|portugal",c:"^spain"},
+"Guerra dels Set Anys":{a:"united kingdom|prussia|brandenburg|portugal|hanover",b:"^france$|austria|\\brussia|sweden|^spain$"},
+"Guerra d'Independència dels Estats Units":{a:"british american colonies|massachusetts|virginia|carolina|pennsylvania|new york|new england|georgia \\(|maryland|connecticut|united states|^france$|^spain$",b:"united kingdom|rupert|quebec"},
+"Guerres Napoleòniques":{a:"^france|french empire|french republic|batavian|confederation of the rhine|kingdom of italy|duchy of warsaw",b:"united kingdom|austria|\\brussia|^spain$|portugal|sweden|prussia"},
+"Guerra del Francès":{a:"^spain$|portugal|united kingdom",b:"^france|french empire|french republic"},
+"Guerres d'independència hispanoamericanes":{a:"new granada|r[ií]o de la plata|united provinces|viceroyalty of peru|viceroyalty of new spain|chile|mexic|venezuela|colombia|paraguay|bolivia|gran colombia",b:"^spain$"},
+"Guerres Carlines":{c:"^spain$"},
+"Guerres de l'Opi":{a:"united kingdom|^france$",b:"manchu|qing"},
+"Rebel·lió Taiping":{c:"manchu|qing"},
+"Guerra de Crimea":{a:"ottoman|united kingdom|^france$|sardinia",b:"\\brussia"},
+"Guerra de Secessió dels Estats Units":{c:"united states"},
+"Guerra de la Triple Aliança":{a:"brazil|argentin|uruguay",b:"paraguay"},
+"Guerra Francoprussiana":{a:"prussia|german confederation|north german|bavaria|baden|w[uü]rttemberg|german empire",b:"^france$"},
+"Guerra de Cuba":{a:"^cuba|united states|philippin",b:"^spain$"},
+"Guerra dels Bòers":{a:"united kingdom|cape colony|natal",b:"transvaal|orange free state"},
+"Guerra Russojaponesa":{a:"japan",b:"\\brussia"},
+"Primera Guerra Mundial":{a:"^france$|united kingdom|\\brussia|kingdom of italy|^italy$|united states|belgium|serbia|romania|portugal|japan|greece|montenegro",b:"german empire|^germany|austro|austria|hungary|ottoman|bulgaria"},
+"Guerra Civil russa":{c:"\\brussia|ussr|soviet|ukrain"},
+"Guerra del Rif":{a:"^spain$|^france$",b:"morocco|^rif"},
+"Guerra Civil xinesa":{c:"^china|republic of china|chinese warlords|manchuria"},
+"Guerra Civil espanyola":{c:"^spain$"},
+"Segona Guerra Sino-japonesa":{a:"^china|republic of china|chinese warlords",b:"japan|manchukuo|manchuria"},
+"Segona Guerra Mundial":{a:"united kingdom|^france$|united states|ussr|soviet|^china|republic of china|chinese warlords|poland|canada|australia|netherlands|belgium|norway|greece|yugoslavia|british raj|brazil|south africa|new zealand|white russia",b:"germany|^italy$|kingdom of italy|japan|hungary|romania|bulgaria|manchukuo"},
+"Guerra araboisraeliana de 1948":{a:"israel|mandatory palestine",b:"egypt|jordan|syria|iraq|lebanon"},
+"Guerra Freda":{a:"united states|united kingdom|^france$|west germany|^italy$|canada|belgium|netherlands|norway|denmark|portugal|iceland|greece|turkey",b:"ussr|soviet|east germany|poland|czech|hungary|romania|bulgaria"},
+"Guerra de Corea":{a:"korea, republic|south korea|united states",b:"democratic people|north korea|^china"},
+"Guerra d'Algèria":{a:"algeria",b:"^france$"},
+"Guerra del Vietnam":{c:"vietnam|tonkin|annam|cochin|laos|cambodia",b:"united states"},
+"Guerra civil de Guatemala":{c:"guatemala"},
+"Guerra de Biafra":{c:"nigeria"},
+"Guerra dels Sis Dies":{a:"israel",b:"egypt|syria|jordan|united arab republic"},
+"Guerra d'independència de Bangladesh":{a:"india|bangladesh|east pakistan",b:"pakistan"},
+"Guerra del Yom Kippur":{a:"egypt|syria",b:"israel"},
+"Guerra civil del Líban":{c:"lebanon"},
+"Guerra soviètica de l'Afganistan":{a:"ussr|soviet",c:"afghanistan"},
+"Guerra de l'Iran i l'Iraq":{a:"iraq",b:"iran"},
+"Guerra de les Malvines":{a:"argentin",b:"united kingdom|falkland"},
+"Guerra del Golf":{a:"united states|united kingdom|^france$|saudi|kuwait|egypt|syria",b:"iraq"},
+"Guerres de Iugoslàvia":{c:"yugoslavia|serbia|croatia|bosnia|slovenia|macedonia|montenegro|kosovo"},
+"Guerra civil i genocidi de Ruanda":{c:"rwanda"},
+"Guerres de Txetxènia":{c:"^russia"},
+"Segona Guerra del Congo":{a:"zaire|democratic republic|angola|zimbabwe|namibia",b:"rwanda|uganda|burundi"},
+"Guerra de l'Afganistan (2001-2021)":{a:"united states|united kingdom|canada|germany|^france$|^italy$|^spain$|australia",c:"afghanistan"},
+"Guerra civil de Síria":{c:"syria"},
+"Guerra de l'Iraq":{a:"united states|united kingdom|australia|^spain$|poland",b:"iraq"}
+};
+
+
+// ===== Fronteres històriques al mode Evolució (Historical Basemaps, GPL-3.0) =====
+const CF_HYEARS=[-500,-400,-323,-300,-200,-100,-1,100,200,300,400,500,600,700,800,900,1000,1100,1200,1279,1300,1400,1492,1500,1530,1600,1650,1700,1715,1783,1800,1815,1878,1880,1900,1914,1920,1930,1938,1945,1960,1994,2000,2010];
+const CF_HCACHE={};const CF_HRE={};
+const cfHSnap=y=>{let s=CF_HYEARS[0];for(const v of CF_HYEARS)if(v<=y)s=v;return s;};
+const cfHRe=(w,k)=>{const S=CF_HSIDES[w.n];if(!S||!S[k])return null;const key=w.n+"|"+k;return CF_HRE[key]||(CF_HRE[key]=new RegExp(S[k],"i"));};
+function cfHLoad(sy){if(CF_HCACHE[sy])return Promise.resolve(CF_HCACHE[sy]);
+  return fetch(`hist/h${sy}.json`).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();}).then(t=>{const fc=topojson.feature(t,t.objects.t);const rw=g=>{if(!g)return;const fix=pl=>{if(d3.geoArea({type:"Polygon",coordinates:pl})>2*Math.PI)pl.forEach(r=>r.reverse());};if(g.type==="Polygon")fix(g.coordinates);else if(g.type==="MultiPolygon")g.coordinates.forEach(fix);};
+    fc.features.forEach(f=>{rw(f.geometry);const p=f.properties||{};f.properties={n:p.n||"",s:p.s||""};f.properties.k=(p.n||"")+(p.s?` [${p.s}]`:"");});CF_HCACHE[sy]=fc;return fc;});}
+function cfHUpdate(){if(CFV.mode!=="evol"||!CFV.hg||CFV.hfail)return;const y=Math.round(CFV.year);const sy=cfHSnap(y);
+  const info=$("#cfmapinfo");
+  if(CFV.hsy!==sy){if(CFV.hload===sy)return;CFV.hload=sy;if(info)info.textContent=`⏳ Carregant el mapa del món de l'any ${cfYear(sy)}…`;
+    cfHLoad(sy).then(fc=>{CFV.hload=null;if(CFV.mode!=="evol"||!CFV.hg)return;if(cfHSnap(Math.round(CFV.year))!==sy){cfHUpdate();return;}cfHDraw(fc,sy);cfHPaint();})
+      .catch(()=>{CFV.hload=null;CFV.hfail=true;if(info)info.textContent="⚠️ No s'han pogut carregar els mapes històrics (cal connexió). Es mostren les fronteres actuals.";if(CFV.gC)CFV.gC.style("display",null);});
+    return;}
+  cfHPaint();}
+function cfHDraw(fc,sy){CFV.hg.selectAll("*").remove();CFV.hsy=sy;
+  CFV.hp=CFV.hg.selectAll("path").data(fc.features.filter(f=>f.geometry)).join("path").attr("d",CFV.path).attr("fill","#f4f1e8").attr("stroke","#a89f88").attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");
+  CFV.hp.append("title").text(d=>d.properties.n||"");
+  if(CFV.gC)CFV.gC.style("display","none");
+  const info=$("#cfmapinfo");if(info)info.innerHTML=`🗺️ Fronteres de l'any <b>${cfYear(sy)}</b>${sy!==Math.round(CFV.year)?` (el mapa més pròxim anterior a ${cfYear(Math.round(CFV.year))})`:""}. Passa el ratolí per damunt d'un territori per a vore'n el nom. Font: Historical Basemaps.`;}
+function cfHPaint(){if(!CFV.hp||CFV.mode!=="evol")return;const one=CFV.painted!=null&&CFV.painted>=0?CF_HIST[CFV.painted]:null;
+  const list=one?[one]:(CFV.act||[]);const fill=new Map();
+  list.forEach((w,i)=>{const pal=one?CF_SC:CF_PAL[(w.slot??i)%CF_PAL.length];const pat=one?"url(#cfsidepat)":`url(#cfpat${(w.slot??i)%CF_PAL.length})`;
+    const rc=cfHRe(w,"c"),rb=cfHRe(w,"b"),ra=cfHRe(w,"a");
+    CFV.hp.each(function(d){const k=d.properties.k;if(!k)return;if(ra&&ra.test(k))fill.set(this,pal[0]);else if(rb&&rb.test(k))fill.set(this,pal[1]);else if(rc&&rc.test(k))fill.set(this,pat);});});
+  CFV.hp.attr("fill",function(){return fill.get(this)||"#f4f1e8";});
+  if(one){try{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;fill.forEach((v,node)=>{const b=node.getBBox();if(b.width*b.height<0.5)return;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height);});
+    if(x1>x0){const vw=$("#cfview"),w=vw.clientWidth,h=vw.clientHeight;const k=Math.max(1,Math.min(7,0.8*Math.min(w/(x1-x0),h/(y1-y0))));CFV.svg.transition().duration(700).call(CFV.zoom.transform,k<1.25?d3.zoomIdentity:d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2));}}catch(_){}}}
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
