@@ -38,7 +38,7 @@ header h1 span{color:#ffd166}
 .sugg div:hover,.sugg div.sel{background:var(--chip)}
 .sugg small{color:var(--muted)}
 #main{flex:1;display:flex;min-height:0;position:relative}
-#mapwrap{flex:1;position:relative;min-width:0;background:var(--ocean)}
+#mapwrap{flex:1;position:relative;min-width:0;background:var(--ocean)}#prnhead{display:none}#prndlg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px}.prnbox{background:var(--card);color:inherit;border-radius:14px;padding:16px;width:min(420px,100%);box-shadow:0 10px 40px rgba(0,0,0,.3)}#prnt{width:100%;box-sizing:border-box;font:inherit;padding:7px;border:1px solid var(--cardline);border-radius:8px;margin-top:3px;background:var(--card);color:inherit}
 #fillov{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
 .fbox{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;min-width:46px;padding:2px 6px;border:2px dashed #34495e;background:rgba(255,255,255,.88);border-radius:7px;font-size:11.5px;font-weight:800;color:#173a5e;text-align:center;cursor:pointer;white-space:nowrap;line-height:16px;min-height:20px}
 .flg{height:1em;width:auto;vertical-align:-0.13em;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.18);display:inline-block}
@@ -290,6 +290,7 @@ body.nohints .hint{display:none!important}#hintbtn.off{opacity:.45}
         <input id="q" type="text" placeholder="🔎 Busca un país, ciutat, poble, riu…" autocomplete="off">
         <div class="sugg" id="sugg"></div>
       </div>
+      <button class="iconbtn" id="prnbtn" title="Imprimir el mapa que es veu">🖨️</button>
       <button class="iconbtn" id="hintbtn" title="Mostrar o amagar les instruccions">💬</button>
       <button class="iconbtn" id="darkbtn" title="Mode fosc">🌙</button>
     </div>
@@ -4274,6 +4275,39 @@ function ggMigBind(){side.querySelectorAll("#ggmsub button").forEach(b=>b.onclic
   side.querySelectorAll(".gghj").forEach(b=>b.onclick=()=>{ggPause();GGV.hy=+b.dataset.y;ggHUpd();});
   $("#gghslider").oninput=e=>{ggPause();GGV.hy=+e.target.value;ggHUpd();};$("#gghprev").onclick=()=>{ggPause();GGV.hy=Math.max(-500,Math.round(GGV.hy)-25);ggHUpd();};$("#gghnext").onclick=()=>{ggPause();GGV.hy=Math.min(2025,Math.round(GGV.hy)+25);ggHUpd();};
   $("#gghplay").onclick=ggHPlay;$("#gghspeed").onchange=e=>{GGV.hspeed=+e.target.value;};};}
+
+// ===== Imprimir el mapa que es veu =====
+function prnView(){const w=$("#mapwrap");const c=[...w.children].filter(e=>e.tagName==="DIV"&&e.querySelector("svg")&&getComputedStyle(e).display!=="none"&&e.offsetWidth>0);return c.length?c[c.length-1]:null;}
+function prnTitle(){const h=side.querySelector("h2");let t=h?h.textContent.trim():"Mapa del Món";const on=[...side.querySelectorAll(".seg button.on")].map(b=>b.textContent.trim()).filter(x=>x.length<45);
+  const ch=side.querySelector(".chip.on");if(ch&&ch.textContent.length<60)on.push(ch.textContent.trim());if(on.length)t+=" · "+on.slice(0,3).join(" · ");
+  const y=[...document.querySelectorAll("#mapwrap .hxyear,#mapwrap #hryear,#mapwrap #cfyear")].find(e=>e.offsetParent&&e.textContent.trim());if(y)t+=" · "+y.textContent.trim();return t;}
+function prnOpen(){let d=$("#prndlg");if(d)d.remove();const o=(()=>{try{return localStorage.getItem("mapa_prn_or")||"land";}catch(_){return "land";}})();
+  document.body.insertAdjacentHTML("beforeend",`<div id="prndlg"><div class="prnbox"><h3 style="margin:0 0 8px">🖨️ Imprimir el mapa</h3>
+  <label class="small"><b>Títol</b></label><input id="prnt" type="text" value="${esc(prnTitle())}">
+  <div class="small" style="margin:10px 0 4px"><b>Orientació del full</b></div>
+  <div class="seg" id="prnor"><button data-v="land" class="${o==="land"?"on":""}">▭ Horitzontal</button><button data-v="port" class="${o==="port"?"on":""}">▯ Vertical</button></div>
+  <label class="small" style="display:block;margin-top:10px"><input type="checkbox" id="prnleg" checked> Incloure la llegenda i l'any</label>
+  <p class="small" style="margin:10px 0 0;opacity:.8">S'imprimirà el mapa tal com el veus ara (amb el zoom i l'any actuals). En el diàleg d'impressió també el pots «Guardar com a PDF».</p>
+  <div class="row" style="gap:6px;margin-top:12px;justify-content:flex-end"><button class="btn sec" id="prnx">Cancel·lar</button><button class="btn" id="prngo">🖨️ Imprimir</button></div></div></div>`);
+  $("#prndlg").onclick=e=>{if(e.target.id==="prndlg")$("#prndlg").remove();};$("#prnx").onclick=()=>$("#prndlg").remove();
+  document.querySelectorAll("#prnor button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#prnor button").forEach(x=>x.classList.toggle("on",x===b));});
+  $("#prngo").onclick=()=>{const or=document.querySelector("#prnor button.on").dataset.v;try{localStorage.setItem("mapa_prn_or",or);}catch(_){}const t=$("#prnt").value,lg=$("#prnleg").checked;$("#prndlg").remove();prnDo(t,or,lg);};}
+function prnDo(title,or,leg){const w=$("#mapwrap"),r=w.getBoundingClientRect();const W=r.width,H=r.height;
+  const pw=or==="land"?1047:718,ph=(or==="land"?718:1047)-70;const k=Math.min(pw/W,ph/H);
+  let st=$("#prnstyle");if(!st){st=document.createElement("style");st.id="prnstyle";document.head.appendChild(st);}
+  st.textContent=`@page{size:A4 ${or==="land"?"landscape":"portrait"};margin:10mm}
+  @media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+  body.mapprint>*:not(#app):not(#prnhead){display:none!important}body.mapprint #app>*:not(#main){display:none!important}body.mapprint #main>*:not(#mapwrap){display:none!important}body.mapprint #app{display:block!important;height:auto!important}
+  body.mapprint #main{display:block!important;height:${Math.ceil(H*k)+4}px!important;min-height:0!important;overflow:hidden!important}body.mapprint #app{min-height:0!important}
+  body.mapprint #mapwrap{width:${W}px!important;height:${H}px!important;flex:none!important;transform:scale(${k});transform-origin:top left;margin:0 auto 0 ${Math.max(0,(pw-W*k)/2)/k}px;overflow:hidden;border:1px solid #999}
+  body.mapprint #mapwrap button,body.mapprint #mapwrap select,body.mapprint #mapwrap input,body.mapprint #mapwrap .citybtns,body.mapprint #tip{display:none!important}
+  ${leg?"":"body.mapprint #mapwrap .hxlegend,body.mapprint #mapwrap #hrlegend,body.mapprint #mapwrap #cflegend,body.mapprint #mapwrap .hxyear,body.mapprint #mapwrap #hryear{display:none!important}"}
+  body.mapprint #prnhead{display:block!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}`;
+  let hd=$("#prnhead");if(!hd){hd=document.createElement("div");hd.id="prnhead";document.body.insertBefore(hd,document.body.firstChild);}
+  const dt=new Date().toLocaleDateString("ca-ES");hd.innerHTML=`<div style="font:700 20px system-ui,sans-serif;margin:0 0 4px">${esc(title)}</div><div style="font:11px system-ui,sans-serif;color:#555;margin-bottom:8px">Mapa del Món interactiu · ${dt}</div>`;
+  document.body.classList.add("mapprint");const end=()=>{document.body.classList.remove("mapprint");window.removeEventListener("afterprint",end);};window.addEventListener("afterprint",end);
+  setTimeout(()=>{try{window.print();}catch(e){alert("Aquest navegador no ha deixat imprimir. Prova-ho des de la versió web (GitHub Pages).");}setTimeout(end,1500);},60);}
+$("#prnbtn").onclick=prnOpen;
 
 // ================= init =================
 wrap.classList.toggle("globe",isGlobe());makeProj();renderLayersBar();renderConts();bindInteraction();layout();recolor();renderLegend();renderWelcome();
